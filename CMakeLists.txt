@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.11)
-project(inference LANGUAGES CXX)
+project(deploy LANGUAGES CXX)
 
 find_package(Git REQUIRED)
 if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
@@ -22,11 +22,11 @@ set(CMAKE_MESSAGE_LOG_LEVEL ${_saved_CMAKE_MESSAGE_LOG_LEVEL})
 include_directories("${CMAKE_SOURCE_DIR}")
 include_directories(third-party/cutlass/tools/util/include)
 include_directories(third-party/cutlass/include)
-include_directories(inference/kernels/include)
+include_directories(deploy/kernels/include)
 
 get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
 foreach(dir ${dirs})
   message(STATUS "dir='${dir}'")
 endforeach()
 
-# add_subdirectory(inference/kernels)
+# add_subdirectory(deploy/kernels)

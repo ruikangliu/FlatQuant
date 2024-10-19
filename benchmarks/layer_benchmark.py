@@ -6,8 +6,8 @@ import numpy as np
 import torch
 import time
 
-import inference
-import inference.transformers.modeling_llama as modeling_llama
+import deploy
+import deploy.transformers.modeling_llama as modeling_llama
 import torch
 import transformers
 
@@ -59,13 +59,13 @@ def module_benchmark(module):
     return (end_time - start_time) * 1000 / num_bench_steps, peak_memory
 
 
-def _build_cache(bsz, length, layer, disable_quant, num_key_value_heads, hidden_size, device, trans="had"):
+def _build_cache(batch_size, length, layer, disable_quant, num_key_value_heads, hidden_size, device, trans="had"):
     num_heads = num_key_value_heads
     model_dim = hidden_size
     # head_dim = model_dim // num_heads
     head_dim = 128  # TODO. fixed head dim for LLaMA models
-    return inference.transformers.MultiLayerPagedKVCache4Bit(
-        bsz=bsz,
+    return deploy.transformers.MultiLayerPagedKVCache4Bit(
+        batch_size=batch_size,
         page_size=length, 
         max_seq_len=length, 
         device=device, 
@@ -207,7 +207,7 @@ def benchmark(args):
         del model
         _cleanup()
         time_prefill_f16, time_decode_f16, time_e2e_f16, mem_f16 = run_all_for_model(
-            layer, cache_builder, args.bsz, args.prefill_seq_len, args.decode_steps, hidden_size)
+            layer, cache_builder, args.batch_size, args.prefill_seq_len, args.decode_steps, hidden_size)
         del layer
         _cleanup()
         print(f'------------------------- FP16 ------------------------')
@@ -225,7 +225,7 @@ def benchmark(args):
         del model
         _cleanup()
         time_prefill_i4_benchmark, time_decode_i4_benchmark, time_e2e_i4_benchmark, mem_i4 = run_all_for_model(
-            layer, cache_builder, args.bsz, args.prefill_seq_len, args.decode_steps, hidden_size)
+            layer, cache_builder, args.batch_size, args.prefill_seq_len, args.decode_steps, hidden_size)
         del layer
         _cleanup()
         print_e2e_time(args, time_prefill_i4_benchmark, time_decode_i4_benchmark, time_e2e_i4_benchmark,
@@ -244,7 +244,7 @@ def benchmark(args):
             del model
             _cleanup()
             time_prefill_i4, time_decode_i4, time_e2e_i4, mem_i4 = run_all_for_model(
-                layer, cache_builder, args.bsz, args.prefill_seq_len, args.decode_steps, hidden_size)
+                layer, cache_builder, args.batch_size, args.prefill_seq_len, args.decode_steps, hidden_size)
             del layer
             _cleanup()
             print_e2e_time(args, time_prefill_i4, time_decode_i4, time_e2e_i4,
@@ -264,7 +264,7 @@ def benchmark(args):
             del model
             _cleanup()
             time_prefill_i4, time_decode_i4, time_e2e_i4, mem_i4 = run_all_for_model(
-                layer, cache_builder, args.bsz, args.prefill_seq_len, args.decode_steps, hidden_size)
+                layer, cache_builder, args.batch_size, args.prefill_seq_len, args.decode_steps, hidden_size)
             del layer
             _cleanup()
             print_e2e_time(args, time_prefill_i4, time_decode_i4, time_e2e_i4,
@@ -276,7 +276,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
-        '--bsz', type=int,
+        '--batch_size', type=int,
         help='Batch size',
         default=None,
     )
@@ -292,9 +292,9 @@ if __name__ == '__main__':
     )
     
     args = parser.parse_args()
-    if args.bsz is None:
+    if args.batch_size is None:
         for bsz in [1, 2, 4, 8, 16, 32, 64]:
-            args.bsz = bsz
+            args.batch_size = bsz
             benchmark(args)
     else:
         benchmark(args)

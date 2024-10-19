@@ -47,18 +47,18 @@ if __name__ == '__main__':
     third_party_cmake()
     remove_unwanted_pytorch_nvcc_flags()
     setup(
-        name='inference',
+        name='deploy',
         ext_modules=[
             CUDAExtension(
-                name='inference._CUDA',
+                name='deploy._CUDA',
                 sources=[
-                    'inference/kernels/bindings.cpp',
-                    'inference/kernels/gemm.cu',
-                    'inference/kernels/quant.cu',
-                    'inference/kernels/flashinfer.cu',
+                    'deploy/kernels/bindings.cpp',
+                    'deploy/kernels/gemm.cu',
+                    'deploy/kernels/quant.cu',
+                    'deploy/kernels/flashinfer.cu',
                 ],
                 include_dirs=[
-                    os.path.join(setup_dir, 'inference/kernels/include'),
+                    os.path.join(setup_dir, 'deploy/kernels/include'),
                     os.path.join(setup_dir, 'third-party/cutlass/include'),
                     os.path.join(setup_dir, 'third-party/cutlass/tools/util/include')
                 ],

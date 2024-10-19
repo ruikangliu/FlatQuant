@@ -2,8 +2,8 @@ import triton
 import triton.language as tl
 import torch
 from triton.language.extra import libdevice
-import inference
-from inference.nn.quantization import Quantizer
+import deploy
+from deploy.nn.quantization import Quantizer
 
 
 @triton.autotune(
@@ -209,7 +209,7 @@ def matmul(a, b, c, seq_len):
             triton.next_power_of_2(M),
             triton.next_power_of_2(N),
         )
-        packed_tensor = inference.PackedQuantizedTensor(quant_res.reshape(B, -1), output_scale)
+        packed_tensor = deploy.PackedQuantizedTensor(quant_res.reshape(B, -1), output_scale)
     else:
         # 1D launch kernel where each block gets its own program.
         grid = (1, seq_len, Actual_B)
@@ -227,7 +227,7 @@ def matmul(a, b, c, seq_len):
             BLOCK_SIZE_M,
             is_split,
         )
-        packed_tensor = inference.PackedQuantizedTensor(quant_res.reshape(B, -1), output_scale)
+        packed_tensor = deploy.PackedQuantizedTensor(quant_res.reshape(B, -1), output_scale)
     return packed_tensor
 
 

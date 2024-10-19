@@ -1,6 +1,6 @@
 import torch
-from inference.nn import Linear4bit, Quantizer
-from inference.nn.online_trans import get_decompose_dim, OnlineTrans
+from deploy.nn import Linear4bit, Quantizer
+from deploy.nn.online_trans import get_decompose_dim, OnlineTrans
 import time
 import argparse
 import numpy as np

@@ -4,7 +4,7 @@ import numpy as np
 import torch
 import time
 
-from inference.transformers.kv_cache import MultiLayerPagedKVCache4Bit
+from deploy.transformers.kv_cache import MultiLayerPagedKVCache4Bit
 
 
 model_sizes = [
