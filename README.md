@@ -4,7 +4,7 @@
 
 This repository contains the PyTorch implementation of [FlatQuant: Flatness Matters for LLM Quantization](https://arxiv.org/abs/2410.09426).
 
-FlatQuant leverages Fast and Learnable Affine Transformations tailored for each linear layer to alleviate outliers in LLMs. By achieving a flat distribution of weights and activations, FlatQuant significantly enhances the quantization accuracy under a low-bit quantization setting (i.e., W4A4) while introducing little inference overhead, which may help promote the deployment of W4A4-quantized LLMs.
+FlatQuant leverages Fast and Learnable Affine Transformations tailored for each linear layer to alleviate outliers in LLMs. Additionally, as indicated by the name, it also achieves pretty flat weights and activations that are friendly to quantization. FlatQuant significantly enhances the quantization accuracy under a low-bit quantization setting (i.e., W4A4) while introducing little inference overhead, which may help promote the deployment of W4A4-quantized LLMs.
 
 ![method](figures/FlatQuant.jpg)
 
@@ -73,21 +73,22 @@ Download models in `./modelzoo`.
 
 We provide full script to run FlatQuant in ./scripts/. We use LLaMa-3-8B as an example here:
 
-1. Weight-activation-kvcache quantization
+1. Weight-Activation-KV Cache Quantization
 
 ```bash
 # W4A4KV4
 python ./main.py \
     --model ./modelzoo/llama-3/llama-3-8b \
     --w_bits 4 --a_bits 4 \
-    --k_bits 4 --k_asym --k_groupsize 128 --v_bits 4 --v_asym --v_groupsize 128 \
+    --k_bits 4 --k_asym --k_groupsize 128 \
+    --v_bits 4 --v_asym --v_groupsize 128 \
     --cali_bsz 4 --epoch 15 --flat_lr 5e-3 \
     --lwc --lac --cali_trans --add_diag \
     --output_dir ./outputs --save_matrix \
     --lm_eval --lm_eval_batch_size 16
 ```
 
-2. Weight-only quantization
+2. Weight-Only Quantization
 
 ```bash
 # W4A16
@@ -100,7 +101,7 @@ python ./main.py \
     --lm_eval --lm_eval_batch_size 16
 ```
 
-3. Reproduce evaluation results of our paper
+3. Reproduce Evaluation Results of Our Paper
 
    1\) Download the pretrained FlatQuant parameters you want through [modelzoo](#model-zoo).
 
@@ -110,7 +111,8 @@ python ./main.py \
 python ./main.py \
     --model ./modelzoo/llama-3/llama-3-8b \
     --w_bits 4 --a_bits 4 \
-    --k_bits 4 --k_asym --k_groupsize 128 --v_bits 4 --v_asym --v_groupsize 128 \
+    --k_bits 4 --k_asym --k_groupsize 128 \
+    --v_bits 4 --v_asym --v_groupsize 128 \
     --cali_bsz 4 --epoch 15 --flat_lr 5e-3 \
     --lwc --lac --cali_trans --add_diag \
     --output_dir ./outputs --save_matrix \
@@ -140,7 +142,7 @@ More detailed and optional arguments:
 - `--reload_matrix`: Load the pre-trained matrix-style parameters of FlatQuant.
 - `--matrix_path`: Path to the pre-trained matrix-style parameters of FlatQuant.
 - `--deactive_amp`: Disable AMP (automatic mixed precision) during training.
-- `--direct_inv`: Use the inverse method in PyTorch to directly compute the inverse matrix instead of the SVD method.
+- `--direct_inv`: Use PyTorch's inverse method to compute the inverse matrix instead of the SVD method.
 - `--lm_eval`: Evaluate the model on language model (LM) evaluation tasks.
 - `--lm_eval_batch_size`: Batch size for evaluation using the LM eval harness.
 
@@ -167,6 +169,12 @@ python ./benchmarks/qlinear_benchmark.py
 # Run attention latency benchmark
 python ./benchmarks/qattention_benchmark.py
 ```
+
+### Apply to other models
+To apply FlatQuant in your own models, some modifications are required in the forward pass of the model, particularly within the Attention and MLP modules. You can refer to [flatquant/model_tools] for our implementations of LLaMA2, LLaMA3, LLaMA3.1, and Qwen2.5.
+
+### Efficient Kernel
+The detailed implementation of our efficient kernel can be found in [deploy/kernels/kron_matmul.py](deploy/kernels/kron_matmul.py) and [deploy/kernels/block_matmul.py](deploy/kernels/block_matmul.py). 
 
 ## Model Zoo
 
