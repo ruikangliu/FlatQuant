@@ -171,7 +171,7 @@ python ./benchmarks/qattention_benchmark.py
 ```
 
 ### Apply to other models
-To apply FlatQuant in your own models, some modifications are required in the forward pass of the model, particularly within the Attention and MLP modules. You can refer to [flatquant/model_tools] for our implementations of LLaMA2, LLaMA3, LLaMA3.1, and Qwen2.5.
+To apply FlatQuant in your own models, some modifications are required in the forward pass of the model, particularly within the Attention and MLP modules. You can refer to [flatquant/model_tools](flatquant/model_tools) for our implementations of LLaMA2, LLaMA3, LLaMA3.1, and Qwen2.5.
 
 ### Efficient Kernel
 The detailed implementation of our efficient kernel can be found in [deploy/kernels/kron_matmul.py](deploy/kernels/kron_matmul.py) and [deploy/kernels/block_matmul.py](deploy/kernels/block_matmul.py). 
