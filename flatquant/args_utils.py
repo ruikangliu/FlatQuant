@@ -14,9 +14,9 @@ supported_models = [
             './modelzoo/llama-3/llama-3-70b',
             './modelzoo/llama-3.1/llama-3.1-8b',
             './modelzoo/llama-3.1/llama-3.1-70b',
-            './modelzoo/llama-3.1-instruct/llama-3.1-instruct-8b', 
-            './modelzoo/Qwen2.5-32B-Instruct', 
-            './modelzoo/Qwen2.5-7B-Instruct', 
+            './modelzoo/llama-3.1-instruct/llama-3.1-instruct-8b',
+            './modelzoo/qwen-2.5-instruct/qwen-2.5-instruct-7b',
+            './modelzoo/qwen-2.5-instruct/qwen-2.5-instruct-32b',
             ]
 # supported_models = [
 #             'meta-llama/Llama-2-7b-hf',
@@ -148,6 +148,7 @@ def parser_gen():
     if args.a_groupsize > -1:
         raise NotImplementedError
     
+    args.quantize = (args.w_bits < 16) or (args.a_bits < 16) or (args.q_bits < 16) or (args.k_bits < 16) or (args.v_bits < 16)
     # cache path
     args.cache_dir = os.path.join(args.output_dir, ".cache")
     os.makedirs(args.cache_dir, exist_ok=True)

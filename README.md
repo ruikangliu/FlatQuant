@@ -47,6 +47,8 @@ Download datasets in `./datasets`.
 
 **Commonsense QA evaluation**
 
+For QA evaluation, we use local config files to specify the paths to local datasets. First, copy the dataset config files under `~/anaconda3/envs/flatquant/lib/python3.10/site-packages/lm_eval/tasks` to `./datasets/lm_eval_configs/tasks`. Next, modify the config item `dataset_path` in each QA dataset's config file to the local directory listed in the following table.
+
 | Dataset         | Local Dir                 | URL                                                                                                                 |
 | --------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------- |
 | ARC-E and ARC-C | ./datasets/ai2_arc        | [https://huggingface.co/datasets/ai2_arc](https://huggingface.co/datasets/ai2_arc)                                     |
@@ -120,32 +122,6 @@ python ./main.py \
     --reload_matrix --matrix_path PATH_TO_XXX 
 ```
 
-More detailed and optional arguments:
-
-- `--model`: The model name or the path to the model weights.
-- `--w_bits`: Number of bits for weight quantization.
-- `--a_bits`: Number of bits for activation quantization.
-- `--k_bits`: Number of bits for key cache quantization.
-- `--k_asym`: Enable asymmetric quantization for the key cache.
-- `--k_groupsize`: Group size for key cache quantization.
-- `--v_bits`: Number of bits for value cache quantization.
-- `--v_asym`: Enable asymmetric quantization for the value cache.
-- `--v_groupsize`: Group size for value cache quantization.
-- `--cali_bsz`: The batch size used in the calibration of FlatQuant.
-- `--epochs`: Number of training epochs for the calibration of FlatQuant.
-- `--flat_lr`: Learning rate for FlatQuant calibration.
-- `--cali_trans`: Enable the calibration of transformations.
-- `--lwc`: Use learnable weight clipping during quantization.
-- `--lac`: Use learnable activation clipping during quantization.
-- `--add_diag`: Add per-channel scaling to transformations.
-- `--save_matrix`: Save the matrix-style parameters of FlatQuant.
-- `--reload_matrix`: Load the pre-trained matrix-style parameters of FlatQuant.
-- `--matrix_path`: Path to the pre-trained matrix-style parameters of FlatQuant.
-- `--deactive_amp`: Disable AMP (automatic mixed precision) during training.
-- `--direct_inv`: Use PyTorch's inverse method to compute the inverse matrix instead of the SVD method.
-- `--lm_eval`: Evaluate the model on language model (LM) evaluation tasks.
-- `--lm_eval_batch_size`: Batch size for evaluation using the LM eval harness.
-
 ### Inference Latency
 
 To measure the speedup of FlatQuant and our efficient kernel, run the corresponding benchmark commands provided below:
@@ -171,14 +147,23 @@ python ./benchmarks/qattention_benchmark.py
 ```
 
 ### Apply to other models
+
 To apply FlatQuant in your own models, some modifications are required in the forward pass of the model, particularly within the Attention and MLP modules. You can refer to [flatquant/model_tools](flatquant/model_tools) for our implementations of LLaMA2, LLaMA3, LLaMA3.1, and Qwen2.5.
 
 ### Efficient Kernel
-The detailed implementation of our efficient kernel can be found in [deploy/kernels/kron_matmul.py](deploy/kernels/kron_matmul.py) and [deploy/kernels/block_matmul.py](deploy/kernels/block_matmul.py). 
+
+The detailed implementation of our efficient kernel can be found in [deploy/kernels/kron_matmul.py](deploy/kernels/kron_matmul.py) and [deploy/kernels/block_matmul.py](deploy/kernels/block_matmul.py).
 
 ## Model Zoo
 
-The model zoo is coming soon.
+We provide the pre-trained matrix-style parameters for FlatQuant at [https://huggingface.co/ruikangliu/FlatQuant](https://huggingface.co/ruikangliu/FlatQuant). The supported models are listed in the following table. For detailed implementations of each model, please refer to the code in `./flatquant/model_tools`.
+
+| Model             | W4A4KV4           | W4A16KV16 |
+| ----------------- | ----------------- | --------- |
+| LLaMa-2           | ✅ 7B / 13B / 70B |           |
+| LLaMa-3           | ✅ 8B / 70B       | ✅ 8B     |
+| LLaMa-3-Instruct  | ✅ 8B / 70B       |           |
+| Qwen-2.5-Instruct | ✅ 7B / 32B       |           |
 
 ## Results
 
@@ -228,9 +213,18 @@ The model zoo is coming soon.
 | SpinQuant           | GPTQ                  | 66.23           | 70.93           | 76.06           | 68.70           | 71.66           |
 | **FlatQuant** | GPTQ                  | **67.47** | **71.64** | **76.53** | **71.33** | **78.58** |
 
+**Table 4: Results of 4-bit weight & activation quantized Qwen-2.5-Instruct models.**
+
+| **Method**    | **W Quantizer** | **7B PPL (WikiText-2 / C4)** | **7B QA Avg.** | **32B PPL (WikiText-2 / C4)** | **32B QA Avg.** |
+| ------------------- | --------------------- | ---------------------------------- | -------------------- | ----------------------------------- | --------------------- |
+| FP16                | -                     | 8.36 / 14.37                       | 70.75                | 5.32 / 10.45                        | 75.10                 |
+| QuaRot              | RTN                   | -                                  | -                    | 6.95 / 12.17                        | 70.24                 |
+| QuaRot              | GPTQ                  | -                                  | -                    | 6.54 / 11.65                        | 72.25                 |
+| **FlatQuant** | RTN                   | **8.46** / **13.94**   | **68.62**      | **5.80 / 10.86**              | **74.89**       |
+
 ### Latency Results
 
-**Table 4: Prefill speedup of LLaMA-2-7B model across different batch sizes on one RTX3090 GPU. We decode 256 tokens after the prefill on a sequence length of 2048.**
+**Table 5: Prefill speedup of LLaMA-2-7B model across different batch sizes on one RTX3090 GPU. We decode 256 tokens after the prefill on a sequence length of 2048.**
 
 | **Batch Size** | **Int4** | **QuaRot** | **FlatQuant** |
 | -------------------- | -------------- | ---------------- | ------------------- |
@@ -242,7 +236,7 @@ The model zoo is coming soon.
 | 32                   | 2.35           | 2.09             | 2.28                |
 | 64                   | 2.37           | 2.11             | 2.30                |
 
-**Table 5: Decoding speedup of LLaMA-2-7B model across different batch sizes on one RTX3090 GPU. We decode 256 tokens after the prefill on a sequence length of 2048.**
+**Table 6: Decoding speedup of LLaMA-2-7B model across different batch sizes on one RTX3090 GPU. We decode 256 tokens after the prefill on a sequence length of 2048.**
 
 | **Batch Size** | **Int4** | **QuaRot** | **FlatQuant** |
 | -------------------- | -------------- | ---------------- | ------------------- |
@@ -260,6 +254,7 @@ This project is based on the work of the following projects:
 
 - [QuaRot](https://github.com/spcl/QuaRot)
 - [OmniQuant](https://github.com/OpenGVLab/OmniQuant)
+- [IntactKV](https://github.com/ruikangliu/IntactKV)
 
 We are grateful for the contributions provided by these projects.
 

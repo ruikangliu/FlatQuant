@@ -52,7 +52,7 @@ def cleanup_memory(verbose=True) -> None:
 
 def distribute_model(model) -> None:
     """Distribute the model across available GPUs. NB: only implemented for Llama-2/3/Qwen-2."""
-    no_split_module_classes = ['LlamaDecoderLayer']
+    no_split_module_classes = ['LlamaDecoderLayer', 'Qwen2DecoderLayer']
     max_memory = get_balanced_memory(model, no_split_module_classes=no_split_module_classes)
 
     device_map = infer_auto_device_map(model, max_memory=max_memory, no_split_module_classes=no_split_module_classes)
