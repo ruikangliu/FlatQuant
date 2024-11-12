@@ -8,9 +8,10 @@ FlatQuant leverages Fast and Learnable Affine Transformations tailored for each 
 
 ![method](figures/FlatQuant.jpg)
 
-## News
+## News 🔥
 
-- [2024/10] 🔥 FlatQuant is publicly released! Check our paper [here](https://arxiv.org/abs/2410.09426).
+- [2024/11] Pre-trained transformation matrices of FlatQuant are now available at [modelzoo](#model-zoo).
+- [2024/10] FlatQuant is publicly released! Check our paper [here](https://arxiv.org/abs/2410.09426).
 
 ## Contents
 
@@ -73,7 +74,7 @@ Download models in `./modelzoo`.
 
 ### Calibration
 
-We provide full script to run FlatQuant in ./scripts/. We use LLaMa-3-8B as an example here:
+We provide full script to run FlatQuant in `./scripts/`. We use LLaMa-3-8B as an example here:
 
 1. Weight-Activation-KV Cache Quantization
 
@@ -154,15 +155,27 @@ To apply FlatQuant in your own models, some modifications are required in the fo
 
 The detailed implementation of our efficient kernel can be found in [deploy/kernels/kron_matmul.py](deploy/kernels/kron_matmul.py) and [deploy/kernels/block_matmul.py](deploy/kernels/block_matmul.py).
 
+### Plot Flatness
+
+Run the following command to plot the flatness of weights and activations after different pre-quantization transformations including FlatQuant, Hdamard transformation and per-channel scaling. We use LLaMa-3-8B as an example here. The flag `--matrix_path` is used to specify the path to the pre-trained transformation matrices of FlatQuant.
+
+```
+python ./plot_flatness.py \
+    --model ./modelzoo/llama-3/llama-3-8b \
+    --distribute_model --add_diag \
+    --matrix_path ./modelzoo/flatquant/llama-3-8b/w4a4
+```
+
+![flatness](figures/flatness.jpg)
+
 ## Model Zoo
 
-We provide the pre-trained matrix-style parameters for FlatQuant at [https://huggingface.co/ruikangliu/FlatQuant](https://huggingface.co/ruikangliu/FlatQuant). The supported models are listed in the following table. For detailed implementations of each model, please refer to the code in `./flatquant/model_tools`.
+We provide the pre-trained transformation matrices of FlatQuant at [https://huggingface.co/ruikangliu/FlatQuant](https://huggingface.co/ruikangliu/FlatQuant). The supported models are listed in the following table. For detailed implementations of each model, please refer to the code in `./flatquant/model_tools`.
 
 | Model             | W4A4KV4           | W4A16KV16 |
 | ----------------- | ----------------- | --------- |
 | LLaMa-2           | ✅ 7B / 13B / 70B |           |
 | LLaMa-3           | ✅ 8B / 70B       | ✅ 8B     |
-| LLaMa-3-Instruct  | ✅ 8B / 70B       |           |
 | Qwen-2.5-Instruct | ✅ 7B / 32B       |           |
 
 ## Results
