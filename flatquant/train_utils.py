@@ -1,10 +1,12 @@
 import os
 import time
 import gc
+import functools
 from contextlib import nullcontext
 
 import torch
 import torch.nn as nn
+import transformers
 
 from flatquant.function_utils import set_require_grad_all, get_n_set_parameters_byname, get_paras_dict_by_name, check_params_grad
 from flatquant.quant_utils import set_quantizer_state
@@ -23,8 +25,8 @@ def cali_flat_quant(args, model, dataloader, dev, logger):
         dtype = torch.float32
         traincast = nullcontext
     else:
-        dtype = torch.float16
-        traincast = torch.cuda.amp.autocast
+        dtype = torch.bfloat16 if isinstance(model, transformers.Qwen2ForCausalLM) else torch.float16
+        traincast = functools.partial(torch.amp.autocast, device_type="cuda", dtype=dtype)
 
     # move embedding layer and first layer to target device
     layers = model.model.layers
