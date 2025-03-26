@@ -25,7 +25,7 @@ def cali_flat_quant(args, model, dataloader, dev, logger):
         dtype = torch.float32
         traincast = nullcontext
     else:
-        dtype = torch.bfloat16 if isinstance(model, transformers.Qwen2ForCausalLM) else torch.float16
+        dtype = torch.float16 if isinstance(model, transformers.LlamaForCausalLM) else torch.bfloat16
         traincast = functools.partial(torch.amp.autocast, device_type="cuda", dtype=dtype)
 
     # move embedding layer and first layer to target device
