@@ -10,6 +10,7 @@ FlatQuant leverages Fast and Learnable Affine Transformations tailored for each 
 
 ## News 🔥
 
+- [2025/05] Our paper has been accepted to ICML 2025! 🎉
 - [2024/11] Pre-trained transformation matrices of FlatQuant are now available at [modelzoo](#model-zoo).
 - [2024/10] FlatQuant is publicly released! Check our paper [here](https://arxiv.org/abs/2410.09426).
 
