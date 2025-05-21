@@ -62,7 +62,7 @@ def load_flat_parameters(args, model, path=None):
     return model
 
 
-def save_flat_matrices(args, model):
+def save_flat_matrices(args, model, rank=None):
     flat_matrices = {}
     for i in range(len(model.model.layers)):
         layer = model.model.layers[i]
@@ -70,8 +70,12 @@ def save_flat_matrices(args, model):
         layer.mlp.rep_matrix_only()
         paras_name = ["trans.matrix", "trans.diag_scale", "clip_factor_w", "clip_factor_a"]
         flat_matrices[i] = get_paras_dict_by_name(layer, required_names=paras_name)
-    torch.save(flat_matrices, os.path.join(args.exp_dir, f"flat_matrices.pth"))
-    logging.info("saved paramaters at {}".format(os.path.join(args.exp_dir, f"flat_matrices.pth")))
+    if rank is not None:
+        matrices_path = os.path.join(args.exp_dir, f"flat_matrices_{rank}.pth")
+    else:
+        matrices_path = os.path.join(args.exp_dir, f"flat_matrices.pth")
+    torch.save(flat_matrices, matrices_path)
+    logging.info("saved paramaters at {}".format(matrices_path))
 
 
 def load_flat_matrices(args, model, path=None):

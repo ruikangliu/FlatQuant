@@ -8,13 +8,13 @@ from flatquant.function_utils import get_init_weight, get_inverse
 class SVDSingleTransMatrix(nn.Module):
     def __init__(self, size):
         super(SVDSingleTransMatrix, self).__init__()
-        self.linear_u = nn.Linear(size, size, bias=False)
+        self.linear_u = nn.Linear(size, size, bias=False, dtype=torch.float32)
         self.linear_u.weight.data = get_init_weight(size).to(self.linear_u.weight)
         self.linear_u = nn.utils.parametrizations.orthogonal(self.linear_u, orthogonal_map="cayley", use_trivialization=False)
-        self.linear_v = nn.Linear(size, size, bias=False)
+        self.linear_v = nn.Linear(size, size, bias=False, dtype=torch.float32)
         self.linear_v.weight.data = get_init_weight(size).to(self.linear_v.weight)
         self.linear_v = nn.utils.parametrizations.orthogonal(self.linear_v, orthogonal_map="cayley", use_trivialization=False)
-        self.linear_diag = torch.nn.Parameter(torch.ones(size), requires_grad=True)
+        self.linear_diag = torch.nn.Parameter(torch.ones(size, dtype=torch.float32), requires_grad=True)
 
         self._eval_mode = False
 
@@ -57,27 +57,27 @@ class SVDSingleTransMatrix(nn.Module):
 class SVDDecomposeTransMatrix(nn.Module):
     def __init__(self, left_size, right_size, add_diag=False, diag_init_para=None):
         super(SVDDecomposeTransMatrix, self).__init__()
-        self.linear_u_left = nn.Linear(left_size, left_size, bias=False)
+        self.linear_u_left = nn.Linear(left_size, left_size, bias=False, dtype=torch.float32)
         self.linear_u_left.weight.data = get_init_weight(left_size).to(self.linear_u_left.weight)
         self.linear_u_left = nn.utils.parametrizations.orthogonal(self.linear_u_left, orthogonal_map="cayley", use_trivialization=False)
-        self.linear_v_left = nn.Linear(left_size, left_size, bias=False)
+        self.linear_v_left = nn.Linear(left_size, left_size, bias=False, dtype=torch.float32)
         self.linear_v_left.weight.data = get_init_weight(left_size).to(self.linear_v_left.weight)
         self.linear_v_left = nn.utils.parametrizations.orthogonal(self.linear_v_left, orthogonal_map="cayley", use_trivialization=False)
-        self.linear_diag_left = torch.nn.Parameter(torch.ones(left_size), requires_grad=True)
+        self.linear_diag_left = torch.nn.Parameter(torch.ones(left_size, dtype=torch.float32), requires_grad=True)
 
-        self.linear_u_right = nn.Linear(right_size, right_size, bias=False)
+        self.linear_u_right = nn.Linear(right_size, right_size, bias=False, dtype=torch.float32)
         self.linear_u_right.weight.data = get_init_weight(right_size).to(self.linear_u_right.weight)
         self.linear_u_right = nn.utils.parametrizations.orthogonal(self.linear_u_right, orthogonal_map="cayley", use_trivialization=False)
-        self.linear_v_right = nn.Linear(right_size, right_size, bias=False)
+        self.linear_v_right = nn.Linear(right_size, right_size, bias=False, dtype=torch.float32)
         self.linear_v_right.weight.data = get_init_weight(right_size).to(self.linear_v_right.weight)
         self.linear_v_right = nn.utils.parametrizations.orthogonal(self.linear_v_right, orthogonal_map="cayley", use_trivialization=False)
-        self.linear_diag_right = torch.nn.Parameter(torch.ones(right_size), requires_grad=True)
+        self.linear_diag_right = torch.nn.Parameter(torch.ones(right_size, dtype=torch.float32), requires_grad=True)
 
         self.add_diag = add_diag
         self.use_diag = True
         if self.add_diag:
             if diag_init_para is None:
-                self.diag_scale = torch.nn.Parameter(torch.ones((left_size * right_size)), requires_grad=True)
+                self.diag_scale = torch.nn.Parameter(torch.ones((left_size * right_size), dtype=torch.float32), requires_grad=True)
             else:
                 self.diag_scale = torch.nn.Parameter(diag_init_para, requires_grad=True)
         self._eval_mode = False
