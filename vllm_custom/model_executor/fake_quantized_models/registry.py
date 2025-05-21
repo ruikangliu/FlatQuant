@@ -1,0 +1,12 @@
+from vllm import ModelRegistry
+from vllm_custom.model_executor.fake_quantized_models.llama_fake_quantized import LlamaFakeQuantizedForCausalLM
+from vllm_custom.model_executor.fake_quantized_models.llama_flatquant import LlamaFlatQuantForCausalLM
+from vllm_custom.model_executor.fake_quantized_models.qwen2_fake_quantized import Qwen2FakeQuantizedForCausalLM
+from vllm_custom.model_executor.fake_quantized_models.qwen2_flatquant import Qwen2FlatQuantForCausalLM
+
+
+def register_fake_quantized_models():
+    ModelRegistry.register_model("LlamaFakeQuantizedForCausalLM", LlamaFakeQuantizedForCausalLM)
+    ModelRegistry.register_model("LlamaFlatQuantForCausalLM", LlamaFlatQuantForCausalLM)
+    ModelRegistry.register_model("Qwen2FakeQuantizedForCausalLM", Qwen2FakeQuantizedForCausalLM)
+    ModelRegistry.register_model("Qwen2FlatQuantForCausalLM", Qwen2FlatQuantForCausalLM)
