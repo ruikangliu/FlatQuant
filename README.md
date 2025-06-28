@@ -1,4 +1,14 @@
-# FlatQuant: Flatness Matters for LLM Quantization
+# A fork of FlatQuant codebase
+
+# Installation
+```
+pip install -r requirements.txt
+pip install -e .
+pip install flash-attn --no-build-isolation
+```
+
+---
+# Original README.md for FlatQuant: Flatness Matters for LLM Quantization
 
 [![arXiv](https://img.shields.io/badge/FlatQuant-2410.09426-b31b1b.svg?logo=arXiv)](https://arxiv.org/abs/2410.09426)
 
