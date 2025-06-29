@@ -1,11 +1,23 @@
 # A fork of FlatQuant codebase
 
+# Changelog
+- Updated cutlass library version since the original version had the bug (see [here](https://github.com/ruikangliu/FlatQuant/issues/16)).
+- Updated the requirements.txt to use later version of `torch`.
+
 # Installation
-```
-pip install -r requirements.txt
-pip install -e .
-pip install flash-attn --no-build-isolation
-```
+1. Install the packages
+    ```bash
+    conda create -n flatquant python=3.10 -y
+    conda activate flatquant
+    # The requirements.txt is updated
+    pip install -r requirements.txt
+    pip install -e .
+    pip install flash-attn --no-build-isolation
+    ```
+2. Download & link the models to `./modelzoo/` via running
+    ```bash
+    python get_snapshot_dir.py
+    ```
 
 ---
 # Original README.md for FlatQuant: Flatness Matters for LLM Quantization
