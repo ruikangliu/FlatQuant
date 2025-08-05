@@ -281,7 +281,6 @@ class FlatQuantLlamaAttention(LlamaAttention):
                     attn_output = self.o_proj(attn_output, qa_trans=[attn_o_og_it, attn_v_og_it])
                 else:
                     attn_output = self.o_proj(attn_output)
-
         if not output_attentions:
             attn_weights = None
         return attn_output, attn_weights, past_key_value

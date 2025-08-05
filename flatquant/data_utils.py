@@ -97,9 +97,9 @@ def get_pile(nsamples, seed, seqlen, tokenizer):
 def get_loaders(
     args, name, nsamples=128, seed=0, seqlen=2048, model='', hf_token=None, eval_mode=False
 ):
-    cache_dir = os.path.join(args.cache_dir, name)
-    os.makedirs(cache_dir, exist_ok=True)
-    cached_dataset = os.path.join(cache_dir, "testset.pkl" if eval_mode else f"trainset-{nsamples}-{seed}.pkl")
+    #cache_dir = os.path.join(args.cache_dir, name)
+    #os.makedirs(cache_dir, exist_ok=True)
+    #cached_dataset = os.path.join(cache_dir, "testset.pkl" if eval_mode else f"trainset-{nsamples}-{seed}.pkl")
     # if os.path.exists(cached_dataset):
     if False:
         print(f"Loading cached tokenized dataset at {cached_dataset}...")
