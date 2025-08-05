@@ -1,8 +1,8 @@
-transformers==4.36.0
+transformers==4.45.0
 torch==2.7.1
 accelerate==0.32.0
 datasets==2.17.1
-lm-eval==0.4.4
+lm-eval==0.4.9.1
 termcolor
 
 ## for Llama2-tokenizer

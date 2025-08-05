@@ -1,10 +1,17 @@
-# A fork of FlatQuant codebase
+# Real FlatQuant codebase
 
-# Changelog
+## Changelog
 - Updated cutlass library version since the original version had the bug (see [here](https://github.com/ruikangliu/FlatQuant/issues/16)).
-- Updated the requirements.txt to use later version of `torch`.
+- Updated the requirements.txt to use later version of `torch` & transformer==4.45.0 for llama>3.1.
+- Add `--quantized_save` flag to save quantized weight in FP16 format.
+- Add `benchmark_model.py` to measure **real speedup** for **whole model** with **real quantized weights**.
+- Add `benchmark_lm_eval.py` to measure **zero-shot performance** for **real quantized model**.
+- Upload real quantized model in Huggingface.
+- Now this codebase can support llama2, llama3, llama3.1, llama3.2, llama3.3.
+- ⚠️ Currently, only models with a `hidden_dim` that is a power of 2 are supported because of triton kernel implementation.
 
-# Installation
+
+## Installation
 1. Install the packages
     ```bash
     conda create -n flatquant python=3.10 -y
@@ -14,10 +21,102 @@
     pip install -e .
     pip install flash-attn --no-build-isolation
     ```
+
+- To run models like LLaMA2, LLaMA3, we use `transformers==4.36.0` instead.
+
 2. Download & link the models to `./modelzoo/` via running
     ```bash
     python get_snapshot_dir.py
     ```
+
+- Unlike original FlatQuant paper, we use `./modelzoo/{model_type}/{hf_model_name}` format e.g. `./modelzoo/llama-3-instruct/llama-3-8b-instruct`.
+- ⚠️ Be sure to use the correct **_CUDA.so** file that matches your environment and GPU. Using a .so file compiled in a different environment may lead to different kernel outputs. You can compile this file with `pip install -e .` in your environment.
+
+
+## Usage
+
+### Calibration
+
+1. Weight-Activation-KV Cache Quantization
+
+```bash
+# W4A4KV4
+python ./main.py \
+    --model ./modelzoo/llama-3/llama-3-8b \
+    --w_bits 4 --a_bits 4 \
+    --k_bits 4 --k_asym --k_groupsize 128 \
+    --v_bits 4 --v_asym --v_groupsize 128 \
+    --cali_bsz 4 --epoch 15 --flat_lr 5e-3 \
+    --lwc --lac --cali_trans --add_diag \
+    --output_dir ./outputs --save_matrix \
+    --lm_eval --lm_eval_batch_size 16 \
+    --quantized_save
+```
+
+### Evaluation & Check Speedup
+
+```bash
+python ./benchmarks/benchmark_model.py --batch_size 1
+python ./benchmarks/benchmark_lm_eval.py --lm_eval_batch_size 16
+```
+
+- This code should be run with transformer==4.45.0
+- If you want to check original speedup in the FlatQuant paper, use `--random_mode`. It is better to use transformer==4.36.0 with `git checkout bfd9e88` for results with high similarity to the original paper.
+- ⚠️ Currently, only quantized models with WAKV sym_quantize are supported.
+
+### Only use pre-quantized model
+
+Use models in Huggingface.
+
+| Model                  |  URL                                                                                                                                                          |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| LLaMA-2-7B             |  [https://huggingface.co/Hyun9junn/Llama-2-7b-hf-W4A4KV4-FlatQuant](https://huggingface.co/Hyun9junn/Llama-2-7b-hf-W4A4KV4-FlatQuant)                         |
+| LLaMA-3-8B             |  [https://huggingface.co/Hyun9junn/Meta-Llama-3-8B-W4A4KV4-FlatQuant](https://huggingface.co/Hyun9junn/Meta-Llama-3-8B-W4A4KV4-FlatQuant)                     |
+| LLaMA-3-8B-Instruct    |  [https://huggingface.co/Hyun9junn/Meta-Llama-3-8B-Instruct-W4A4KV4-FlatQuant](https://huggingface.co/Hyun9junn/Meta-Llama-3-8B-Instruct-W4A4KV4-FlatQuant)   |
+| LLaMA-3-70B            |  [https://huggingface.co/Hyun9junn/Meta-Llama-3-70B-W4A4KV4-FlatQuant](https://huggingface.co/Hyun9junn/Meta-Llama-3-70B-W4A4KV4-FlatQuant)                   |
+| LLaMA-3.1-8B           |  [https://huggingface.co/Hyun9junn/Llama-3.1-8B-W4A4KV4-FlatQuant](https://huggingface.co/Hyun9junn/Llama-3.1-8B-W4A4KV4-FlatQuant)                           |
+| LLaMA-3.1-8B-Instruct  |  [https://huggingface.co/Hyun9junn/Llama-3.1-8B-Instruct-W4A4KV4-FlatQuant](https://huggingface.co/Hyun9junn/Llama-3.1-8B-Instruct-W4A4KV4-FlatQuant)         |
+| LLaMA-3.3-70B-Instruct |  [https://huggingface.co/Hyun9junn/Llama-3.3-70B-Instruct-W4A4KV4-FlatQuant](https://huggingface.co/Hyun9junn/Llama-3.3-70B-Instruct-W4A4KV4-FlatQuant)       |
+
+
+## Results
+
+### Accuracy Results
+
+**Table 1: WikiText-2 perplexity of 4-bit weight & acitvation quantized LLaMA models.**
+
+| **Method**         | **W Quantizer** | **2-7B** | **3-8B**   | **3-70B** | **3.1-8B** | **3-8B-Instuct** | **3.1-8B-Instuct** | **3.1-70B-Instuct** | **3.3-70B-Instruct** |
+| ------------------ | --------------- | -------- | ---------- | --------- | ---------- | ---------------- | ------------------ | ------------------- | -------------------- |
+| FP16               | -               | 5.47     | 6.14       | 2.85      | 6.24       | 8.28             | 7.21               | 3.78                | 3.86                 |
+| **Fake-FlatQuant** | RTN             | **5.79** | **6.98**   | **3.77**  | **7.01**   | **8.97**         | **7.97**           | **4.64**            | **4.83**             |
+| **Real-FlatQuant** | RTN             | **5.80** | **6.93**   | **4.83**  | **6.97**   | **9.01**         | **8.53**           | **4.67**            | **4.03**             |
+
+**Table 2: Zero-shot QA task results of 4-bit weight & activation quantized LLaMA models.**
+
+| **Method**         | **W Quantizer** | **2-7B**  | **3-8B**  | **3-70B** | **3.1-8B** | **3-8B-Instuct** | **3.1-8B-Instuct** | **3.1-70B-Instuct** | **3.3-70B-Instruct** |
+| ------------------ | --------------- | --------- | --------- | --------- | ---------- | ---------------- | ------------------ | ------------------- | -------------------- |
+| FP16               | -               | 69.81     | 73.26     | 80.03     | 74.04      | 72.54            | 73.76              | 78.41               | 78.39                |
+| **Fake-FlatQuant** | RTN             | **67.98** | **70.58** | **78.20** | **71.52**  | **70.50**        | **71.36**          | **77.69**           | **77.45**            |
+| **Real-FlatQuant** | RTN             | **67.88** | **70.46** | **77.52** | **71.35**  | **70.57**        | **70.95**          | **77.55**           | **77.62**            |
+
+
+### Latency Results
+
+**Table 3: Prefill speedup for batch sizes 1 on one RTX3090 GPU. We decode 256 tokens after the prefill on a sequence length of 2048.**
+
+| **Model name**       | **Int4** | **QuaRot** | **FlatQuant** |
+| -------------------- | -------- | ---------- | ------------- |
+| LLaMA-2-7B           | 2.10     | 1.95       | 1.98          |
+| LLaMA-3-8B           | 2.24     | 2.12       | 2.01          |
+| LLaMA-3-8B-Instruct  | 2.24     | 2.12       | 2.06          |
+
+**Table 4: Decoding speedup for batch sizes 1 on one RTX3090 GPU. We decode 256 tokens after the prefill on a sequence length of 2048.**
+
+| **Model name**       | **Int4** | **QuaRot** | **FlatQuant** |
+| -------------------- | -------- | ---------- | ------------- |
+| LLaMA-2-7B           | 0.67     | 0.59       | 0.48          |
+| LLaMA-3-8B           | 0.66     | 0.58       | 0.47          |
+| LLaMA-3-8B-Instruct  | 0.67     | 0.58       | 0.48          |
 
 ---
 # Original README.md for FlatQuant: Flatness Matters for LLM Quantization

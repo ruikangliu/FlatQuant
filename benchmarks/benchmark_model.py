@@ -18,7 +18,9 @@ from tqdm import tqdm
 model_configs = [
     "./modelzoo/llama-2-hf/llama-2-7b-hf",
     "./modelzoo/llama-3/llama-3-8b", 
-    "./modelzoo/llama-3-instruct/llama-3-8b-instruct"
+    "./modelzoo/llama-3-instruct/llama-3-8b-instruct",
+    "./modelzoo/llama-3.1-instruct/llama-3.1-8b-instruct",
+    "./modelzoo/llama-3.1/llama-3.1-8b"
 ]
 
 benchmark_dtypes = ["int4", torch.float16]
@@ -95,7 +97,7 @@ def ppl_eval(model, testenc):
     nlls = []
     inference_times = []
     
-    for i in range(nsamples):
+    for i in tqdm(range(nsamples)):
         batch = testenc[:, (i * max_length): ((i + 1) * max_length)]
 
         torch.cuda.synchronize()
@@ -300,7 +302,6 @@ def run_decode(model, bsz, prefill_length, decode_steps):
     _cleanup()
     next_input = torch.tensor([[100] for _ in range (bsz)], dtype=torch.int32, device=device)
     def _decode_for_multiple_steps():
-        past_key_values.length = prefill_length
         for _ in range(decode_steps):
             model(next_input, past_key_values=past_key_values)
     return module_benchmark(_decode_for_multiple_steps)

@@ -17,6 +17,8 @@ LlamaFlashAttention2, LlamaForCausalLM, apply_rotary_pos_emb, LlamaMLP
 from transformers.pytorch_utils import ALL_LAYERNORM_LAYERS
 from typing import Optional, Tuple
 from transformers import Cache
+from transformers.modeling_flash_attention_utils import _flash_attention_forward
+from transformers.cache_utils import Cache, DynamicCache
 
 
 ALL_LAYERNORM_LAYERS.append(deploy.nn.RMSNorm)
@@ -37,6 +39,8 @@ class FlatQuantFP16LlamaAttention(LlamaFlashAttention2):
         self.inp_trans_k = torch.nn.Identity()
         self.inp_trans_v = torch.nn.Identity()
         self.o_proj_trans = torch.nn.Identity()
+        
+        self._supports_cache_class = True
 
     def forward(
         self,
@@ -47,6 +51,7 @@ class FlatQuantFP16LlamaAttention(LlamaFlashAttention2):
         output_attentions: bool = False,
         use_cache: bool = False,
         cache_position: Optional[torch.LongTensor] = None,
+        position_embeddings: Optional[Tuple[torch.Tensor, torch.Tensor]] = None,
         cache_kwargs = None,
         **kwargs,
     ) -> Tuple[torch.Tensor, Optional[torch.Tensor], Optional[Tuple[torch.Tensor]]]:
@@ -89,12 +94,20 @@ class FlatQuantFP16LlamaAttention(LlamaFlashAttention2):
 
         kv_seq_len = key_states.shape[1]
         kv_seq_len += past_key_value.get_usable_length(kv_seq_len, self.layer_idx)
-        cos, sin = self.rotary_emb(value_states, seq_len=kv_seq_len)
+
+        if position_embeddings is None:
+            # for llama2, 3
+            cos, sin = self.rotary_emb(value_states, position_ids)
+        else:
+            # for llama 3.1~
+            cos, sin = position_embeddings
+            
         query_states, key_states = apply_rotary_pos_emb(query_states, key_states, cos, sin, position_ids, unsqueeze_dim=2)
 
         past_key_value = getattr(self, "past_key_value", past_key_value)
         assert past_key_value is not None
         # sin and cos are specific to RoPE models; position_ids needed for the static cache
+        
         if cache_kwargs is None:
             cache_kwargs = {}
         cache_kwargs.update({
@@ -114,12 +127,13 @@ class FlatQuantFP16LlamaAttention(LlamaFlashAttention2):
             trans_mat_for_q = cache_kwargs.get("trans_matrix_k_inv_t")
             if trans_mat_for_q is not None:
                 query_states = torch.matmul(query_states.to(torch.float16), trans_mat_for_q) # trans for q TODO: fix hard-coded trans dtype
-            attn_output = self._flash_attention_forward(
+            attn_output = _flash_attention_forward(
                 query_states, 
                 key_states, 
                 value_states, 
                 query_length=q_len, 
-                attention_mask=attention_mask
+                attention_mask=attention_mask,
+                is_causal=True
             )
         else:
             attn_output = cache_out(query_states)
@@ -190,6 +204,7 @@ class FlatQuantLlamaAttention(FlatQuantFP16LlamaAttention):
         output_attentions: bool = False,
         use_cache: bool = False,
         cache_position: Optional[torch.LongTensor] = None,
+        position_embeddings: Optional[Tuple[torch.Tensor, torch.Tensor]] = None,
         **kwargs,
     ) -> Tuple[torch.Tensor, Optional[torch.Tensor], Optional[Tuple[torch.Tensor]]]:
 
@@ -216,6 +231,7 @@ class FlatQuantLlamaAttention(FlatQuantFP16LlamaAttention):
             output_attentions=output_attentions,
             use_cache=use_cache,
             cache_position=cache_position,
+            position_embeddings=position_embeddings,
             cache_kwargs=cache_kwargs,
         )
 
@@ -311,16 +327,21 @@ class FlatQuantFP16LlamaForCausalLM(LlamaForCausalLM):
 
 
     def forward(self, input_ids, *args, past_key_values=None, **kwargs):
-        if past_key_values is None:
-            max_length = self._expected_max_length or input_ids.shape[1]
+        if past_key_values is None or isinstance(past_key_values, DynamicCache):
+            max_length = max(self._expected_max_length or 0, input_ids.shape[1])
             self._expected_max_length = None # Reset this value.
             past_key_values = self.build_cache(
                 input_ids.shape[0], 
-                page_size=max_length,  # For now working with single page per batch.
+                page_size=min(2048, max_length),  # For now working with single page per batch.
                 max_length=max_length)
-        out = super().forward(input_ids, *args, past_key_values=past_key_values, **kwargs)
+            past_key_values = deploy.transformers.HFCacheAdapter(past_key_values)
+        elif not isinstance(past_key_values, Cache):
+            past_key_values = deploy.transformers.HFCacheAdapter(past_key_values)
+
+        kwargs.pop("use_cache", None)
+        out = super().forward(input_ids, *args, past_key_values=past_key_values, use_cache = True, **kwargs)
         return out
-    
+
 
 class FlatQuantLlamaForCausalLM(FlatQuantFP16LlamaForCausalLM):
     def __init__(self, args, config):
@@ -335,6 +356,8 @@ class FlatQuantLlamaForCausalLM(FlatQuantFP16LlamaForCausalLM):
                 layer.post_attention_layernorm = deploy.nn.RMSNorm(config.hidden_size, eps=config.rms_norm_eps)
             layer.mlp = FlatQuantLlamaMLP(options=args, config=config)
         self.cache_dtype = "int4"
+        if hasattr(self, "generation_config"):
+            self.generation_config.cache_implementation = None
 
         
     @classmethod

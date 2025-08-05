@@ -124,15 +124,15 @@ def kronecker_matmul(x, invs, clip_factor_a_max = 1.0, clip_factor_a_min = 1.0):
         bsz, seq_len, head_dim, num_heads = init_shape
         inv = invs[0]
         x = x.reshape(-1, head_dim, num_heads)
-        (x @ inv).contiguous()
-        just_quantize = not ((head_dim > 0 and math.log2(head_dim).is_integer()) and (num_heads > 0 and math.log2(num_heads).is_integer()))
+        #(x @ inv).contiguous()
+        #just_quantize = not ((head_dim > 0 and math.log2(head_dim).is_integer()) and (num_heads > 0 and math.log2(num_heads).is_integer()))
         
-        x = block_matmul(x, inv, seq_len, clip_factor_a_max, clip_factor_a_min, just_quantize)
+        x = block_matmul(x, inv, seq_len, clip_factor_a_max, clip_factor_a_min)
         # TODO: kernel only support for dim == power of 2
-        if just_quantize:
-            x = x.reshape(bsz, seq_len, head_dim, -1)
-            x = x.transpose(-1,-2).contiguous().reshape(bsz, seq_len, -1)
-            x = quant(x, clip_factor_a_max, clip_factor_a_min)
+        #if just_quantize:
+        #    x = x.reshape(bsz, seq_len, head_dim, -1)
+        #    x = x.transpose(-1,-2).contiguous().reshape(bsz, seq_len, -1)
+        #    x = quant(x, clip_factor_a_max, clip_factor_a_min)
 
         x.quantized_x = x.quantized_x.reshape(bsz, seq_len, -1, num_heads)
         x.scales_x = x.scales_x.reshape(bsz, 1, seq_len)

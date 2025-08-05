@@ -204,10 +204,25 @@ class MultiLayerPagedKVCache4Bit(Cache):
         return (length + self.page_size - 1) // self.page_size
     
     def _ensure_page_cnt_per_batch(self, expected_page_cnt_per_batch):
-        expected_page_cnt = expected_page_cnt_per_batch * self.batch_size
-        if expected_page_cnt <= self.pages.shape[0]:
+        expected_total = expected_page_cnt_per_batch * self.batch_size
+        current_total  = self.pages.shape[0]
+        if expected_total <= current_total:
             return
-        raise NotImplementedError
+
+        grow_to_total = max(expected_total, current_total * 2)
+        add_total = grow_to_total - current_total
+
+        new_pages = torch.empty(
+            (add_total, *self.pages.shape[1:]),
+            dtype=self.pages.dtype, device=self.pages.device
+        )
+        self.pages = torch.cat([self.pages, new_pages], dim=0)
+
+        new_scales = torch.empty(
+            (add_total, *self.scales.shape[1:]),
+            dtype=self.scales.dtype, device=self.scales.device
+        )
+        self.scales = torch.cat([self.scales, new_scales], dim=0)
 
     @property
     def seen_tokens(self):
@@ -374,3 +389,26 @@ class MultiLayerPagedKVCache4Bit(Cache):
 
     def to_legacy_cache(self):
         return self
+
+
+class HFCacheAdapter(Cache):
+    def __init__(self, inner):
+        super().__init__()
+        self.inner = inner
+
+    def get_usable_length(self, kv_seq_len: int, layer_idx: int) -> int:
+        return self.inner.get_usable_length(kv_seq_len, layer_idx)
+
+    def get_seq_length(self) -> int:
+        return self.inner.get_seq_length()
+
+    def get_max_length(self) -> int:
+        return self.inner.get_max_length()
+
+    def update(self, key_states, value_states, layer_idx: int, cache_kwargs=None):
+        return self.inner.update(key_states, value_states, layer_idx, cache_kwargs)
+
+    def to_legacy_cache(self):
+        if hasattr(self.inner, "to_legacy_cache"):
+            return self.inner.to_legacy_cache()
+        return super().to_legacy_cache()
