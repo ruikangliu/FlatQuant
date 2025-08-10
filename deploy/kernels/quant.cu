@@ -4,7 +4,9 @@
 template<typename T>
 __device__ __half int_to_half(T value)
 {
-    return __int2half_rn(static_cast<int>(value));
+    int int_value = static_cast<int>(value);
+    int_value = max(-65176, min(65176, int_value));
+    return __int2half_rn(int_value);
 }
 
 

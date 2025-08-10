@@ -3,7 +3,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 import subprocess
 
 model_id_to_dir = {
-    "meta-llama/Meta-Llama-3-8B": "./modelzoo/llama-3/llama-3-8b",
+    "meta-llama/Llama-2-7B-hf": "./modelzoo/llama-2/llama-2-7b-hf",
 }
 
 for model_id, local_dir in model_id_to_dir.items():
