@@ -5,13 +5,13 @@ This is a fork of [FlatQuant](https://github.com/ruikangliu/FlatQuant) that supp
 ## Changelog
 - Updated cutlass library version since the original version had the bug (see [here](https://github.com/ruikangliu/FlatQuant/issues/16)).
 - Updated the requirements.txt to use later version of `torch` & transformer==4.45.0 for llama>3.1.
-- Add `--quantized_save` flag to save quantized weight in FP16 format.
+- Add `--quantized_save` flag to save real quantized weights from fake quantized weights.
 - Add `benchmark_model.py` to measure **real speedup** for **whole model** with **real quantized weights**.
 - Add `benchmark_lm_eval.py` to measure **zero-shot performance** for **real quantized model**.
 - Upload real quantized model in Huggingface.
 - Now this codebase can support llama2, llama3, llama3.1, llama3.2, llama3.3.
 - Attention during the prefill uses unquantized query/keys as they are available during the prefill.
-- Implemented learned activation clipping for FlatQuant kernels.
+- Implemented **learned activation clipping** for FlatQuant kernels.
 - ⚠️ Currently, only models with a `hidden_dim` that is a power of 2 are supported because of triton kernel implementation.
 
 
