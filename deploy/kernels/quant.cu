@@ -77,9 +77,11 @@ __global__ void sym_dequantize_i32_f16_kernel(
     {
         return;
     }
+    
+    const __half h_10    = __float2half(10.0f);
 
-    half xElement = int_to_half(q[col + row * cols]);
-    x[col + row * cols] = scale_row[row] * scale_col[col] * xElement;
+    half xElement = int_to_half(q[col + row * cols] / 10.0f);
+    x[col + row * cols] = scale_row[row] * scale_col[col] * xElement * h_10;
 }
 
 void sym_dequant_host(const int32_t *q,
