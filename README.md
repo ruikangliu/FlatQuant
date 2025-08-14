@@ -1,4 +1,6 @@
-# Real FlatQuant codebase
+# FlatQuant-RealQuant
+
+This is a fork of [FlatQuant](https://github.com/ruikangliu/FlatQuant) that supports real quantization of the fake quantized weights produced by FlatQuant.
 
 ## Changelog
 - Updated cutlass library version since the original version had the bug (see [here](https://github.com/ruikangliu/FlatQuant/issues/16)).
@@ -8,6 +10,8 @@
 - Add `benchmark_lm_eval.py` to measure **zero-shot performance** for **real quantized model**.
 - Upload real quantized model in Huggingface.
 - Now this codebase can support llama2, llama3, llama3.1, llama3.2, llama3.3.
+- Attention during the prefill uses unquantized query/keys as they are available during the prefill.
+- Implemented learned activation clipping for FlatQuant kernels.
 - ⚠️ Currently, only models with a `hidden_dim` that is a power of 2 are supported because of triton kernel implementation.
 
 
@@ -29,7 +33,7 @@
     python get_snapshot_dir.py
     ```
 
-- Unlike original FlatQuant paper, we use `./modelzoo/{model_type}/{hf_model_name}` format e.g. `./modelzoo/llama-3-instruct/llama-3-8b-instruct`.
+- Unlike original FlatQuant repository, we use `./modelzoo/{model_type}/{hf_model_name}` format e.g. `./modelzoo/llama-3-instruct/llama-3-8b-instruct`.
 - ⚠️ Be sure to use the correct **_CUDA.so** file that matches your environment and GPU. Using a .so file compiled in a different environment may lead to different kernel outputs. You can compile this file with `pip install -e .` in your environment.
 
 
@@ -37,21 +41,20 @@
 
 ### Calibration
 
-1. Weight-Activation-KV Cache Quantization
-
-```bash
-# W4A4KV4
-python ./main.py \
-    --model ./modelzoo/llama-3/llama-3-8b \
-    --w_bits 4 --a_bits 4 \
-    --k_bits 4 --k_asym --k_groupsize 128 \
-    --v_bits 4 --v_asym --v_groupsize 128 \
-    --cali_bsz 4 --epoch 15 --flat_lr 5e-3 \
-    --lwc --lac --cali_trans --add_diag \
-    --output_dir ./outputs --save_matrix \
-    --lm_eval --lm_eval_batch_size 16 \
-    --quantized_save
-```
+- Weight-Activation-KV Cache Quantization
+    ```bash
+    # W4A4KV4
+    python ./main.py \
+        --model ./modelzoo/llama-3/llama-3-8b \
+        --w_bits 4 --a_bits 4 \
+        --k_bits 4 --k_asym --k_groupsize 128 \
+        --v_bits 4 --v_asym --v_groupsize 128 \
+        --cali_bsz 4 --epoch 15 --flat_lr 5e-3 \
+        --lwc --lac --cali_trans --add_diag \
+        --output_dir ./outputs --save_matrix \
+        --lm_eval --lm_eval_batch_size 16 \
+        --quantized_save
+    ```
 
 ### Evaluation & Check Speedup
 
@@ -64,9 +67,7 @@ python ./benchmarks/benchmark_lm_eval.py --lm_eval_batch_size 16
 - If you want to check original speedup in the FlatQuant paper, use `--random_mode`. It is better to use transformer==4.36.0 with `git checkout bfd9e88` for results with high similarity to the original paper.
 - ⚠️ Currently, only quantized models with WAKV sym_quantize are supported.
 
-### Only use pre-quantized model
-
-Use models in Huggingface.
+### Pre-quantized models in Huggingface
 
 | Model                  |  URL                                                                                                                                                          |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
