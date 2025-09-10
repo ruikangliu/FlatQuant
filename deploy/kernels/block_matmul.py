@@ -322,5 +322,4 @@ def benchmark(B, M, N, S, provider):
     if provider == 'triton':
         ms, min_ms, max_ms = triton.testing.do_bench(lambda: block_matmul(b, c, S), quantiles=quantiles)
     perf = lambda ms: 2 * B * M * N * N * 1e-12 / (ms * 1e-3)
-    #import pdb; pdb.set_trace()
     return perf(ms), perf(max_ms), perf(min_ms), ms, max_ms, min_ms

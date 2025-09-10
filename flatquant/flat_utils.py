@@ -22,7 +22,7 @@ def reparameterize_ln(ln, trans):
     ln_weight = ln.weight.data
     ori_dtype = ln_weight.dtype
     ln_weight = ln_weight.to(torch.float64)
-    ln_weight = ln_weight * trans.diag_scale.to(torch.float64) ## activation에서 on-line으로 하는 대신 ln, upgate weight에 fuse / 논문이랑 달리 diag_scale < 1, 즉 activation엔 곱하고 weight엔 나눔
+    ln_weight = ln_weight * trans.diag_scale.to(torch.float64)
     ln.weight.data = ln_weight.to(ori_dtype)
     trans.use_diag = False
 
@@ -91,8 +91,6 @@ def load_flat_matrices(args, model, path=None):
         layers[i].mlp.rep_matrix_only()
         layers[i].load_state_dict(flat_param, strict=False)
     return model
-
-
 
 
 ## save weight in uint8 with safetensors

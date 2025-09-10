@@ -97,32 +97,20 @@ def get_pile(nsamples, seed, seqlen, tokenizer):
 def get_loaders(
     args, name, nsamples=128, seed=0, seqlen=2048, model='', hf_token=None, eval_mode=False
 ):
-    #cache_dir = os.path.join(args.cache_dir, name)
-    #os.makedirs(cache_dir, exist_ok=True)
-    #cached_dataset = os.path.join(cache_dir, "testset.pkl" if eval_mode else f"trainset-{nsamples}-{seed}.pkl")
-    # if os.path.exists(cached_dataset):
-    if False:
-        print(f"Loading cached tokenized dataset at {cached_dataset}...")
-        with open(cached_dataset, "rb") as f:
-            dataset = pickle.load(f)
+
+    if hf_token is None:
+        tokenizer = transformers.AutoTokenizer.from_pretrained(model, use_fast=False)
     else:
-        if hf_token is None:
-            tokenizer = transformers.AutoTokenizer.from_pretrained(model, use_fast=False)
-        else:
-            tokenizer = transformers.AutoTokenizer.from_pretrained(model, use_fast=False, use_auth_token=hf_token)
-        if 'wikitext2' in name:
-            dataset = get_wikitext2(nsamples, seed, seqlen, tokenizer, eval_mode)
-        elif 'ptb' in name:
-            dataset = get_ptb_new(nsamples, seed, seqlen, tokenizer, eval_mode)
-        elif 'c4' in name:
-            dataset = get_c4_new(nsamples, seed, seqlen, tokenizer, eval_mode)
-        elif 'pile' in name:
-            dataset = get_pile(nsamples, seed, seqlen, tokenizer)
-        # with open(cached_dataset, "wb") as f:
-        #     print(f"Saving cached tokenized dataset at {cached_dataset}...")
-        #     if 'c4' in name and eval_mode:
-        #         dataset = dataset.input_ids
-        #     pickle.dump(dataset, f)
+        tokenizer = transformers.AutoTokenizer.from_pretrained(model, use_fast=False, use_auth_token=hf_token)
+    if 'wikitext2' in name:
+        dataset = get_wikitext2(nsamples, seed, seqlen, tokenizer, eval_mode)
+    elif 'ptb' in name:
+        dataset = get_ptb_new(nsamples, seed, seqlen, tokenizer, eval_mode)
+    elif 'c4' in name:
+        dataset = get_c4_new(nsamples, seed, seqlen, tokenizer, eval_mode)
+    elif 'pile' in name:
+        dataset = get_pile(nsamples, seed, seqlen, tokenizer)
+
     if 'c4' in name and eval_mode:
         dataset = dataset.input_ids
         dataset = TokenizerWrapper(dataset)
