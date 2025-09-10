@@ -1,4 +1,6 @@
-Here, we add the explanation of the changes for real quantization of the fake quantized weights produced by FlatQuant algorithm, along with the quantized weights and their performance.
+# Real Quantization for FlatQuant
+
+Here, we add the explanation of the changes for real quantization of the fake quantized weights produced by FlatQuant algorithm, along with the pre-quantized weights in Huggingface and their performance.
 
 ## Quick Start
 
@@ -10,13 +12,10 @@ model = AutoModelForCausalLM.from_pretrained(
     "Hyun9junn/Meta-Llama-3-8B-Instruct-W4A4KV4-FlatQuant",
     trust_remote_code=True,
     torch_dtype=torch.float16,
+    torch_device="cuda:0"
 )
 tokenizer = AutoTokenizer.from_pretrained("Hyun9junn/Meta-Llama-3-8B-Instruct-W4A4KV4-FlatQuant")
 streamer = TextStreamer(tokenizer)
-
-if torch.cuda.is_available():
-    device = torch.device("cuda:0")
-    model = model.to(device)
 
 prompt = "Summarize Barry Bonds's career so far as a legendary tale told by an old baseball coach.\n"
 
@@ -40,6 +39,7 @@ with torch.no_grad():
         pad_token_id = tokenizer.eos_token_id
     )
 ```
+This might take a while to see the first token, as this compiles the FlatQuant kernel on the fly.
 
 ## Installation
 1. Install the packages
