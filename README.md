@@ -179,8 +179,8 @@ For QA evaluation, we use local config files to specify the paths to local datas
 
 | Dataset         | Local Dir                 | URL                                                                                                                    |
 | --------------- | ------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| ARC-E and ARC-C | ./datasets/ai2_arc        | [https://huggingface.co/datasets/ai2_arc](https://huggingface.co/datasets/ai2_arc)                                     |
-| HellaSwag       | ./datasets/hellaswag      | [https://huggingface.co/datasets/hellaswag](https://huggingface.co/datasets/hellaswag)                                 |
+| ARC-E and ARC-C | ./datasets/ai2_arc        | [https://huggingface.co/datasets/allenai/ai2_arc](https://huggingface.co/datasets/allenai/ai2_arc)                                     |
+| HellaSwag       | ./datasets/hellaswag      | [https://huggingface.co/datasets/Rowan/hellaswag](https://huggingface.co/datasets/Rowan/hellaswag)                                 |
 | LAMBADA         | ./datasets/lambada_openai | [https://huggingface.co/datasets/EleutherAI/lambada_openai](https://huggingface.co/datasets/EleutherAI/lambada_openai) |
 | PIQA            | ./datasets/piqa           | [https://huggingface.co/datasets/ybisk/piqa](https://huggingface.co/datasets/ybisk/piqa)                               |
 | WinoGrande      | ./datasets/winogrande     | [https://huggingface.co/datasets/winogrande](https://huggingface.co/datasets/winogrande)                               |
