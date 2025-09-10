@@ -1,1 +1,1 @@
-from .kv_cache import MultiLayerPagedKVCache4Bit
+from .kv_cache import MultiLayerPagedKVCache4Bit, HFCacheAdapter

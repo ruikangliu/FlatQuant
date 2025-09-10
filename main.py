@@ -47,6 +47,10 @@ def main():
             quantizers = gptq_utils.rtn_fwrd(model, utils.DEV, args)
         save_dict["w_quantizers"] = quantizers
 
+    ## save quantized weight
+    if args.quantized_save:
+        flat_utils.save_quantized_weights_with_safetensors(args, model, quantizers)
+
     if args.distribute_model:
         utils.distribute_model(model)
     else:
@@ -75,12 +79,12 @@ def main():
 
         hflm = HFLM(pretrained=model, tokenizer=tokenizer, batch_size=args.lm_eval_batch_size)
 
-        task_manager = lm_eval.tasks.TaskManager(include_path="./datasets/lm_eval_configs/tasks", include_defaults=False)
-        task_names = lm_eval_utils.pattern_match(args.tasks, task_manager.all_tasks)
+        task_names = args.tasks
+
         results = {}
         for task_name in task_names:
             logger.info(f"Evaluating {task_name}...")
-            result = lm_eval.simple_evaluate(hflm, tasks=[task_name], batch_size=args.lm_eval_batch_size, task_manager=task_manager)['results']
+            result = lm_eval.simple_evaluate(hflm, tasks=[task_name], batch_size=args.lm_eval_batch_size)['results']
             result = result[task_name]
             acc = round(result.get('acc_norm,none', result['acc,none']) * 100, 2)
             results[task_name] = acc

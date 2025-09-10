@@ -12,3 +12,7 @@ CMakeFiles/*
 CMakeCache.txt
 *.egg
 Makefile
+log_*.txt
+*.pth
+modelzoo/*
+outputs/*

@@ -14,6 +14,8 @@ from transformers.models.llama.modeling_llama import LlamaMLP, LlamaAttention, \
                                                      apply_rotary_pos_emb, repeat_kv
 
 
+from tqdm import tqdm
+
 class FlatQuantLlamaMLP(LlamaMLP):
     def __init__(self, args, module: LlamaMLP):
         super().__init__(module.config)
@@ -279,7 +281,6 @@ class FlatQuantLlamaAttention(LlamaAttention):
                     attn_output = self.o_proj(attn_output, qa_trans=[attn_o_og_it, attn_v_og_it])
                 else:
                     attn_output = self.o_proj(attn_output)
-
         if not output_attentions:
             attn_weights = None
         return attn_output, attn_weights, past_key_value
@@ -327,7 +328,7 @@ class FlatQuantLlamaAttention(LlamaAttention):
 def apply_flatquant_to_llama(args, model):
     skip_initialization()
     # Replace module with FlatQuant version
-    for layer in range(model.config.num_hidden_layers):
+    for layer in tqdm(range(model.config.num_hidden_layers), desc="Applying FlatQuant to model"):
         # attn
         model.model.layers[layer].self_attn = FlatQuantLlamaAttention(args, model.model.layers[layer].self_attn)
         # mlp

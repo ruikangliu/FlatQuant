@@ -2,7 +2,20 @@ import torch, math
 import fast_hadamard_transform
 from deploy.kernels.kron_matmul import kron_matmul
 from deploy.kernels.block_matmul import block_matmul
+import deploy
 # Adapted from https://github.com/Cornell-RelaxML/quip-sharp/blob/main/lib/utils/matmul_had.py
+
+def get_decompose_dim(n):
+    a = int(math.sqrt(n))
+    if a * a < n:
+        a += 1
+    while True:
+        tmp = a*a - n
+        b = int(math.sqrt(tmp))
+        if b * b == tmp:
+            break
+        a += 1
+    return a - b, a + b
 
 
 def get_hadK(n, transpose=False):
@@ -74,21 +87,53 @@ def get_hadK(n, transpose=False):
 #         raise NotImplementedError
 #     return x.reshape(init_shape)
 
+def quant(x, clip_factor_a_max = 1.0, clip_factor_a_min = 1.0, input_clip_ratio=1.0):
+    if clip_factor_a_max != 1.0:
+        reshaped_x = x.reshape((-1, x.shape[-1]))
+        xmax, xmin = reshaped_x.amax(1, keepdim=True), reshaped_x.amin(1, keepdim=True)
+        tmp = torch.zeros_like(xmax)
+        xmax, xmin = torch.maximum(xmax, tmp), torch.minimum(xmin, tmp)
 
-def kronecker_matmul(x, invs):
+        xmax = xmax * torch.sigmoid(torch.tensor(clip_factor_a_max).to(x.device))
+        xmin = xmin * torch.sigmoid(torch.tensor(clip_factor_a_min).to(x.device))
+
+        xmax = torch.maximum(torch.abs(xmin), xmax)
+        tmp = xmax == 0
+        scales_x = (xmax / 7)
+        scales_x[tmp] = 1
+        scales_x = scales_x.to(torch.float16)
+    else:
+        scales_x = (torch.max(torch.abs(x), dim=-1)[0].unsqueeze(1)/7).to(torch.float16) * input_clip_ratio
+
+    quantized_x = deploy.sym_quant(x, scales_x)
+    packed_tensor = deploy.PackedQuantizedTensor(quantized_x, scales_x)
+    return packed_tensor
+
+
+def kronecker_matmul(x, invs, clip_factor_a_max = 1.0, clip_factor_a_min = 1.0):
     init_shape = x.shape
     if len(invs) == 2:
         bsz, seq_len, hidden_dim = init_shape
         invL, invR = invs
+        invL = invL.T.contiguous()
         x = x.reshape(-1, invL.shape[0], invR.shape[0])
-        x = kron_matmul(invL, x, invR, seq_len)
+        x = kron_matmul(invL, x, invR, seq_len, clip_factor_a_max, clip_factor_a_min)
         x.quantized_x = x.quantized_x.reshape(bsz, seq_len, -1)
         x.scales_x = x.scales_x.reshape(bsz, 1, seq_len)
     elif len(invs) == 1:
         bsz, seq_len, head_dim, num_heads = init_shape
         inv = invs[0]
         x = x.reshape(-1, head_dim, num_heads)
-        x = block_matmul(x, inv, seq_len)
+        #(x @ inv).contiguous()
+        #just_quantize = not ((head_dim > 0 and math.log2(head_dim).is_integer()) and (num_heads > 0 and math.log2(num_heads).is_integer()))
+        
+        x = block_matmul(x, inv, seq_len, clip_factor_a_max, clip_factor_a_min)
+        # TODO: kernel only support for dim == power of 2
+        #if just_quantize:
+        #    x = x.reshape(bsz, seq_len, head_dim, -1)
+        #    x = x.transpose(-1,-2).contiguous().reshape(bsz, seq_len, -1)
+        #    x = quant(x, clip_factor_a_max, clip_factor_a_min)
+
         x.quantized_x = x.quantized_x.reshape(bsz, seq_len, -1, num_heads)
         x.scales_x = x.scales_x.reshape(bsz, 1, seq_len)
     else:

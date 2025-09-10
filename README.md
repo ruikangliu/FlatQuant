@@ -12,6 +12,7 @@ FlatQuant leverages Fast and Learnable Affine Transformations tailored for each 
 
 ## News 🔥
 
+- [2025/09] We add codes, results and instructions for real quantization, along with the pre-quantized models in HuggingFace, see [REALQUANT.md](REALQUANT.md).
 - [2025/05] We now support **fake quantized inference** in **vLLM**.
 - [2025/05] FlatQuant for **DeepSeek V3/R1** is now available!
 - [2025/05] Our paper has been **accepted to ICML 2025**! 🎉
@@ -76,6 +77,11 @@ Download models in `./modelzoo`.
 | LLaMA-3-70B | ./modelzoo/llama-3/llama-3-70b | [https://huggingface.co/meta-llama/Meta-Llama-3-70B](https://huggingface.co/meta-llama/Meta-Llama-3-70B) |
 
 ## Usage
+
+### Pre-quantized models in HuggingFace & Real quantization codes and results
+
+We provide the instruction for using the pre-quantized models in HuggingFace, along with the explanation of the real quantization code, results in [REALQUANT.md](REALQUANT.md).
+These changes were introduced in the Issue [#24](https://github.com/ruikangliu/FlatQuant/issues/24) and PR [#27](https://github.com/ruikangliu/FlatQuant/pull/27).
 
 ### Calibration
 

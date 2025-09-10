@@ -33,7 +33,11 @@ def third_party_cmake():
     if cmake is None:
             raise RuntimeError('Cannot find CMake executable.')
 
-    retcode = subprocess.call([cmake, HERE])
+    retcode = subprocess.call([
+        cmake, 
+        "-DCMAKE_CUDA_ARCHITECTURES=75;80;86",
+        HERE
+    ])
     if retcode != 0:
         sys.stderr.write("Error: CMake configuration failed.\n")
         sys.exit(1)

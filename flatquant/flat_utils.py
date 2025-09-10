@@ -93,3 +93,112 @@ def load_flat_matrices(args, model, path=None):
     return model
 
 
+## save weight in uint8 with safetensors
+def save_quantized_weights_with_safetensors(args, model, quantizers, sym = True):
+
+    from deploy.functional import pack_i4
+    import json
+    from safetensors.torch import save_file
+    from huggingface_hub import split_torch_state_dict_into_shards
+
+    state_dict = {}
+    metadata = {}
+    max_shard_size = "5GB"
+    
+    for name, param in model.named_parameters():
+        if name.endswith('.weight') or name.endswith('.bias'):
+            layer_name = name.rsplit('.', 1)[0]
+        else:
+            layer_name = name
+            
+        is_quantized = layer_name in quantizers
+        
+        if is_quantized and 'weight' in name:
+            scale = quantizers[layer_name].scale
+            maxq = quantizers[layer_name].maxq
+            zero = quantizers[layer_name].zero
+            
+            scale = scale.to(param.device)
+            zero = zero.to(param.device)
+            maxq = maxq.to(param.device)
+
+            if sym:
+                param_quant = torch.clamp((param / scale).round(), -(maxq + 1), maxq)
+
+            else:
+                param_quant = torch.clamp((param / scale).round() + zero, 0, maxq)
+            
+            param_quant_int8 = param_quant.to(torch.int8)
+            state_dict[name] = pack_i4(param_quant_int8).contiguous()
+
+        else:
+            state_dict[name] = param.to(torch.half).contiguous()
+    
+    for layer_name, quantizer in quantizers.items():
+        state_dict[f"quantizer.{layer_name}.scale"] = quantizer.scale.contiguous()
+
+        if hasattr(quantizer, 'zero') and quantizer.zero is not None:
+            state_dict[f"quantizer.{layer_name}.zero"] = quantizer.zero.contiguous()
+
+        if hasattr(quantizer, 'maxq') and quantizer.maxq is not None:
+            state_dict[f"quantizer.{layer_name}.maxq"] = quantizer.maxq.contiguous()
+
+    state_dict_split = split_torch_state_dict_into_shards(
+        state_dict, 
+        max_shard_size = max_shard_size,
+        filename_pattern = "model{suffix}.safetensors"
+    )
+
+    save_dir = args.exp_dir
+    os.makedirs(save_dir, exist_ok=True)
+
+    metadata['quantization_config'] = json.dumps({
+        'w_bits': args.w_bits,
+        'model_name': args.model,
+        'symmetric': sym,
+        'format': 'packed_int4'
+    })
+    
+    shards = {}
+    for filename, tensor_names in state_dict_split.filename_to_tensors.items():
+        shard_state_dict = {}
+        for tensor_name in tensor_names:
+            shard_state_dict[tensor_name] = state_dict[tensor_name]
+        shards[filename] = shard_state_dict
+    
+    # Save shards
+    first_shard = True
+    for shard_file, shard_state_dict in shards.items():
+        shard_path = os.path.join(save_dir, shard_file)
+        
+        # Only add metadata to the first file
+        if first_shard:
+            save_file(shard_state_dict, shard_path, metadata=metadata)
+            first_shard = False
+        else:
+            save_file(shard_state_dict, shard_path)
+        print(f"Saved {shard_file}")
+    
+    # Save index
+    if state_dict_split.is_sharded:
+        index = {
+            "metadata": state_dict_split.metadata if hasattr(state_dict_split, 'metadata') else {},
+            "weight_map": state_dict_split.tensor_to_filename
+        }
+        index_path = os.path.join(save_dir, "model.safetensors.index.json")
+        with open(index_path, "w") as f:
+            json.dump(index, f, indent = 2)
+        print(f"Saved index to {index_path}")
+    
+    # Save config
+    config_path = os.path.join(save_dir, "quantization_config.json")
+    with open(config_path, 'w') as f:
+        json.dump({
+            'w_bits': args.w_bits,
+            'model_name': args.model,
+            'symmetric': sym,
+            'format': 'packed_int4',
+            'sharded': state_dict_split.is_sharded
+        }, f, indent=2)
+
+    logging.info("saved weights at {}".format(save_dir))
