@@ -1,0 +1,6 @@
+# for llama 2 and llama 3
+transformers==4.36.0
+lm-eval==0.4.4
+peft==0.13.2
+
+# tokenizers 0.15.2

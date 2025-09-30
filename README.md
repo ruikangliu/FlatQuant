@@ -2,7 +2,7 @@
 
 [![arXiv](https://img.shields.io/badge/FlatQuant-2410.09426-b31b1b.svg?logo=arXiv)](https://arxiv.org/abs/2410.09426)
 
-This repository contains the PyTorch implementation of [FlatQuant: Flatness Matters for LLM Quantization](https://arxiv.org/abs/2410.09426).
+This repository contains the PyTorch implementation of the ICML 2025 paper [FlatQuant: Flatness Matters for LLM Quantization](https://arxiv.org/abs/2410.09426).
 
 ---
 
@@ -58,8 +58,8 @@ For QA evaluation, we use local config files to specify the paths to local datas
 
 | Dataset         | Local Dir                 | URL                                                                                                                    |
 | --------------- | ------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| ARC-E and ARC-C | ./datasets/ai2_arc        | [https://huggingface.co/datasets/allenai/ai2_arc](https://huggingface.co/datasets/allenai/ai2_arc)                                     |
-| HellaSwag       | ./datasets/hellaswag      | [https://huggingface.co/datasets/Rowan/hellaswag](https://huggingface.co/datasets/Rowan/hellaswag)                                 |
+| ARC-E and ARC-C | ./datasets/ai2_arc        | [https://huggingface.co/datasets/allenai/ai2_arc](https://huggingface.co/datasets/allenai/ai2_arc)                     |
+| HellaSwag       | ./datasets/hellaswag      | [https://huggingface.co/datasets/Rowan/hellaswag](https://huggingface.co/datasets/Rowan/hellaswag)                     |
 | LAMBADA         | ./datasets/lambada_openai | [https://huggingface.co/datasets/EleutherAI/lambada_openai](https://huggingface.co/datasets/EleutherAI/lambada_openai) |
 | PIQA            | ./datasets/piqa           | [https://huggingface.co/datasets/ybisk/piqa](https://huggingface.co/datasets/ybisk/piqa)                               |
 | WinoGrande      | ./datasets/winogrande     | [https://huggingface.co/datasets/winogrande](https://huggingface.co/datasets/winogrande)                               |
@@ -70,12 +70,20 @@ Download models in `./modelzoo`.
 
 | Model       | Local Dir                      | URL                                                                                                      |
 | ----------- | ------------------------------ | -------------------------------------------------------------------------------------------------------- |
-| LLaMA-2-7B  | ./modelzoo/llama-2/llama-2-7b  | [https://huggingface.co/meta-llama/Llama-2-7b](https://huggingface.co/meta-llama/Llama-2-7b)             |
-| LLaMA-2-13B | ./modelzoo/llama-2/llama-2-13b | [https://huggingface.co/meta-llama/Llama-2-13b](https://huggingface.co/meta-llama/Llama-2-13b)           |
-| LLaMA-2-70B | ./modelzoo/llama-2/llama-2-70b | [https://huggingface.co/meta-llama/Llama-2-70b](https://huggingface.co/meta-llama/Llama-2-70b)           |
-| LLaMA-3-8B  | ./modelzoo/llama-3/llama-3-8b  | [https://huggingface.co/meta-llama/Meta-Llama-3-8B](https://huggingface.co/meta-llama/Meta-Llama-3-8B)   |
-| LLaMA-3-70B | ./modelzoo/llama-3/llama-3-70b | [https://huggingface.co/meta-llama/Meta-Llama-3-70B](https://huggingface.co/meta-llama/Meta-Llama-3-70B) |
-
+| LLaMA-2-7B  | ./modelzoo/meta-llama/Llama-2-7b-hf  | [https://huggingface.co/meta-llama/Llama-2-7b-hf](https://huggingface.co/meta-llama/Llama-2-7b-hf)             |
+| LLaMA-2-13B | ./modelzoo/meta-llama/Llama-2-13b-hf | [https://huggingface.co/meta-llama/Llama-2-13b-hf](https://huggingface.co/meta-llama/Llama-2-13b-hf)           |
+| LLaMA-2-70B | ./modelzoo/meta-llama/Llama-2-70b-hf | [https://huggingface.co/meta-llama/Llama-2-70b-hf](https://huggingface.co/meta-llama/Llama-2-70b-hf)           |
+| LLaMA-3-8B  | ./modelzoo/meta-llama/Meta-Llama-3-8B  | [https://huggingface.co/meta-llama/Meta-Llama-3-8B](https://huggingface.co/meta-llama/Meta-Llama-3-8B)   |
+| LLaMA-3-70B | ./modelzoo/meta-llama/Meta-Llama-3-70B | [https://huggingface.co/meta-llama/Meta-Llama-3-70B](https://huggingface.co/meta-llama/Meta-Llama-3-70B) |
+| LLaMA-3-8B-Ins | ./modelzoo/meta-llama/Meta-Llama-3-8B-Instruct | [https://huggingface.co/meta-llama/Meta-Llama-3-8B-Instruct](https://huggingface.cometa-llama/Meta-Llama-3-8B-Instruct) |
+| LLaMA-3-70B-Ins | ./modelzoo/meta-llama/Meta-Llama-3-70B-Instruct | [https://huggingface.co/meta-llama/Meta-Llama-3-70B-Instruct](https://huggingface.co/meta-llama/Meta-Llama-3-70B-Instruct) |
+| LLaMA-3.1-8B | ./modelzoo/meta-llama/Llama-3.1-8B | [https://huggingface.co/meta-llama/Llama-3.1-8B](https://huggingface.co/meta-llama/Llama-3.1-8B) |
+| LLaMA-3.1-70B | ./modelzoo/meta-llama/Llama-3.1-70B | [https://huggingface.co/meta-llama/Llama-3.1-70B](https://huggingface.co/meta-llama/Llama-3.1-70B) |
+| LLaMA-3.1-8B-Ins | ./modelzoo/meta-llama/Llama-3.1-8B-Instruct | [https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct](https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct) |
+| LLaMA-3.1-70B-Ins | ./modelzoo/meta-llama/Llama-3.1-70B-Instruct | [https://huggingface.co/meta-llama/Llama-3.1-70B-Instruct](https://huggingface.co/meta-llama/Llama-3.1-70B-Instruct) |
+| LLaMA-3.3-70B-Ins | ./modelzoo/meta-llama/Llama-3.3-70B-Instruct | [https://huggingface.co/meta-llama/Llama-3.3-70B-Instruct](https://huggingface.co/meta-llama/Llama-3.3-70B-Instruct) |
+| Qwen2.5-7B-Ins | ./modelzoo/Qwen/Qwen2.5-7B-Instruct | [https://huggingface.co/Qwen/Qwen2.5-7B-Instruct](https://huggingface.co/Qwen/Qwen2.5-7B-Instruct) |
+| Qwen2.5-32B-Ins | ./modelzoo/Qwen/Qwen2.5-32B-Instruct | [https://huggingface.co/Qwen/Qwen2.5-32B-Instruct](https://huggingface.co/Qwen/Qwen2.5-32B-Instruct) |
 ## Usage
 
 ### Pre-quantized models in HuggingFace & Real quantization codes and results
@@ -92,7 +100,7 @@ We provide full script to run FlatQuant in `./scripts/`. We use LLaMa-3-8B as an
 ```bash
 # W4A4KV4
 python ./main.py \
-    --model ./modelzoo/llama-3/llama-3-8b \
+    --model ./modelzoo/meta-llama/Meta-Llama-3-8B\
     --w_bits 4 --a_bits 4 \
     --k_bits 4 --k_asym --k_groupsize 128 \
     --v_bits 4 --v_asym --v_groupsize 128 \
@@ -107,7 +115,7 @@ python ./main.py \
 ```bash
 # W4A16
 python ./main.py \
-    --model ./modelzoo/llama-3/llama-3-8b \
+    --model ./modelzoo/meta-llama/Meta-Llama-3-8B \
     --w_bits 4 \
     --cali_bsz 4 --epoch 15 --flat_lr 5e-3 \
     --lwc --lac --cali_trans --add_diag \
@@ -123,7 +131,7 @@ python ./main.py \
 
 ```bash
 python ./main.py \
-    --model ./modelzoo/llama-3/llama-3-8b \
+    --model ./modelzoo/meta-llama/Meta-Llama-3-8B \
     --w_bits 4 --a_bits 4 \
     --k_bits 4 --k_asym --k_groupsize 128 \
     --v_bits 4 --v_asym --v_groupsize 128 \
@@ -179,7 +187,7 @@ Run the following command to plot the flatness of weights and activations after 
 
 ```
 python ./plot_flatness.py \
-    --model ./modelzoo/llama-3/llama-3-8b \
+    --model ./modelzoo/meta-llama/Meta-Llama-3-8B \
     --distribute_model --add_diag \
     --matrix_path ./modelzoo/flatquant/llama-3-8b/w4a4
 ```

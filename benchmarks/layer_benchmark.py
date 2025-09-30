@@ -13,9 +13,11 @@ import transformers
 
 
 model_configs = [
-    "./modelzoo/llama-2/llama-2-7b",
-    # "./modelzoo/llama-2-13b",
-    #"./modelzoo/llama-3/llama-3-8b",
+    './modelzoo/meta-llama/Llama-2-7b-hf',
+    # './modelzoo/meta-llama/Meta-Llama-3-8B',
+    # './modelzoo/meta-llama/Meta-Llama-3-8B-Instruct',
+    # './modelzoo/meta-llama/Llama-3.1-8B', 
+    # './modelzoo/meta-llama/Llama-3.1-8B-Instruct', 
 ]
 
 benchmark_dtypes = ["int4", torch.float16]

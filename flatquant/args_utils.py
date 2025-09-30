@@ -7,35 +7,21 @@ import pprint
 
 
 supported_models = [
-            './modelzoo/llama-2/llama-2-7b',
-            #'./modelzoo/llama-2/llama-2-13b',
-            './modelzoo/llama-2/llama-2-70b',
-            './modelzoo/llama-2-hf/llama-2-7b-hf',
-            #'./modelzoo/llama-2-hf/llama-2-13b-hf',
-            './modelzoo/llama-2-hf/llama-2-70b-hf',
-            './modelzoo/llama-3/llama-3-8b',
-            './modelzoo/llama-3/llama-3-70b',
-            './modelzoo/llama-3.1/llama-3.1-8b',
-            './modelzoo/llama-3.1/llama-3.1-70b',
-            './modelzoo/llama-3.1-instruct/llama-3.1-8b-instruct',
-            './modelzoo/llama-3.3-instruct/llama-3.3-70b-instruct',
-            './modelzoo/llama-3-instruct/llama-3-8b-instruct',
-            './modelzoo/llama-3-instruct/llama-3-8b-instruct',
-            './modelzoo/qwen-2.5-instruct/qwen-2.5-7b-instruct',
-            './modelzoo/qwen-2.5-instruct/qwen-2.5-32b-instruct',
+            './modelzoo/meta-llama/Llama-2-7b-hf',
+            './modelzoo/meta-llama/Llama-2-13b-hf',
+            './modelzoo/meta-llama/Llama-2-70b-hf',
+            './modelzoo/meta-llama/Meta-Llama-3-8B',
+            './modelzoo/meta-llama/Meta-Llama-3-70B',
+            './modelzoo/meta-llama/Meta-Llama-3-8B-Instruct',
+            './modelzoo/meta-llama/Meta-Llama-3-70B-Instruct',
+            './modelzoo/meta-llama/Llama-3.1-8B', 
+            './modelzoo/meta-llama/Llama-3.1-70B', 
+            './modelzoo/meta-llama/Llama-3.1-8B-Instruct', 
+            './modelzoo/meta-llama/Llama-3.1-70B-Instruct', 
+            './modelzoo/meta-llama/Llama-3.3-70B-Instruct', 
+            './modelzoo/Qwen/Qwen2.5-7B-Instruct', 
+            './modelzoo/Qwen/Qwen2.5-32B-Instruct', 
             ]
-# supported_models = [
-#             'meta-llama/Llama-2-7b-hf',
-#             'meta-llama/Llama-2-13b-hf',
-#             'meta-llama/Llama-2-70b-hf',
-#             'meta-llama/Meta-Llama-3-8B',
-#             'meta-llama/Meta-Llama-3-70B',
-#             'meta-llama/Llama-3.1-8B', 
-#             'meta-llama/Llama-3.1-70B', 
-#             'meta-llama/Llama-3.1-8B-Instruct', 
-#             'Qwen/Qwen2.5-32B-Instruct', 
-#             'Qwen/Qwen2.5-7B-Instruct', 
-#             ]
 supported_datasets = ['wikitext2', 'c4', 'pile']
 
 
@@ -160,9 +146,9 @@ def parser_gen():
     
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
     args.quantize = (args.w_bits < 16) or (args.a_bits < 16) or (args.q_bits < 16) or (args.k_bits < 16) or (args.v_bits < 16)
-    # cache path
-    args.cache_dir = os.path.join(args.output_dir, ".cache")
-    os.makedirs(args.cache_dir, exist_ok=True)
+    # # cache path
+    # args.cache_dir = os.path.join(args.output_dir, ".cache")
+    # os.makedirs(args.cache_dir, exist_ok=True)
     # output path
     args.model_name = args.model.split("/")[-1]
     args.exp_dir = os.path.join(args.output_dir, args.model_name, f"w{args.w_bits}a{args.a_bits}", args.exp_name)

@@ -52,14 +52,13 @@ This might take a while to see the first token, as this compiles the FlatQuant k
     pip install flash-attn --no-build-isolation
     ```
 
-- To run models like LLaMA2, LLaMA3, we use `transformers==4.36.0` instead.
+- To run models like LLaMA2 and LLaMA3, please install dependencies from `requirements_llama2.txt`.
 
 2. Download & link the models to `./modelzoo/` via running
     ```bash
     python get_snapshot_dir.py
     ```
 
-- Unlike original FlatQuant repository, we use `./modelzoo/{model_type}/{hf_model_name}` format e.g. `./modelzoo/llama-3-instruct/llama-3-8b-instruct`.
 - ⚠️ Be sure to use the correct **_CUDA.so** file that matches your environment and GPU. Using a .so file compiled in a different environment may lead to different kernel outputs. You can compile this file with `pip install -e .` in your environment.
 
 
@@ -71,7 +70,7 @@ This might take a while to see the first token, as this compiles the FlatQuant k
     ```bash
     # W4A4KV4
     python ./main.py \
-        --model ./modelzoo/llama-3/llama-3-8b \
+        --model ./modelzoo/meta-llama/Meta-Llama-3-8B \
         --w_bits 4 --a_bits 4 \
         --k_bits 4 --k_asym --k_groupsize 128 \
         --v_bits 4 --v_asym --v_groupsize 128 \
