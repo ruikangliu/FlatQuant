@@ -2,6 +2,7 @@ import os
 import math
 import functools
 from tqdm import tqdm
+import transformers
 
 import torch
 import numpy as np
@@ -69,13 +70,13 @@ def get_act_stats(model, dataset):
 @torch.no_grad()
 def get_flatness(args, logger, transform_type=None):
     model, apply_flatquant_to_model = model_utils.get_model(args.model, args.hf_token)
+    tokenizer = transformers.AutoTokenizer.from_pretrained(args.model, use_fast=False, use_auth_token=args.hf_token)
     model.eval()
 
     # get calibration data
     trainloader = data_utils.get_loaders(
-        args, args.cali_dataset, nsamples=args.nsamples,
-        seed=args.seed, model=args.model,
-        seqlen=model.seqlen, eval_mode=False
+        args, args.cali_dataset, tokenizer, 
+        nsamples=args.nsamples, eval_mode=False
     )
     logger.info("Finished loading training data.")
 
@@ -160,13 +161,13 @@ def get_flatness(args, logger, transform_type=None):
 
 def get_act_scales(args, logger):
     model, apply_flatquant_to_model = model_utils.get_model(args.model, args.hf_token)
+    tokenizer = transformers.AutoTokenizer.from_pretrained(args.model, use_fast=False, use_auth_token=args.hf_token)
     model.eval()
 
     # get calibration data
     dataset = data_utils.get_loaders(
-        args, args.cali_dataset, nsamples=args.nsamples,
-        seed=args.seed, model=args.model,
-        seqlen=model.seqlen, eval_mode=False
+        args, args.cali_dataset, tokenizer, 
+        nsamples=args.nsamples, eval_mode=False
     )
     logger.info("Finished loading training data.")
 

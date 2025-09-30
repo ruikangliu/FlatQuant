@@ -19,9 +19,8 @@ def main():
 
     # get calibration data
     trainloader = data_utils.get_loaders(
-        args, args.cali_dataset, nsamples=args.nsamples,
-        seed=args.seed, model=args.model,
-        seqlen=model.seqlen, eval_mode=False
+        args, args.cali_dataset, tokenizer, 
+        nsamples=args.nsamples, seqlen=model.seqlen, eval_mode=False, 
     )
     logger.info("Finished loading training data.")
 
@@ -62,10 +61,8 @@ def main():
         testloader = data_utils.get_loaders(
                 args,
                 eval_dataset,
-                seed=args.seed,
-                model=args.model,
+                tokenizer,
                 seqlen=model.seqlen,
-                hf_token=args.hf_token,
                 eval_mode=True
             )
         dataset_ppl = eval_utils.ppl_eval(model, testloader)
