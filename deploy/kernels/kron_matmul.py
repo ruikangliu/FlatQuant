@@ -37,6 +37,8 @@ def matmul_kernel(
         stride_resb, stride_resm, stride_resn,
         BLOCK_SIZE_M: tl.constexpr, # we use BLOCK_SIZE_M == triton.next_power_of_2(BLOCK_SIZE_M) to fuse quant into matmul
         is_split: tl.constexpr,
+        clip_factor_a_max,
+        clip_factor_a_min,
 ):
     """
     a @ b @ c
@@ -86,12 +88,23 @@ def matmul_kernel(
         # atomic max does support fp16
         # tl.atomic_max(output_scale + batch_id, max_src_val.to(tl.float16))
     else:
-        abs_src_val = tl.abs(accumulator)
-        max_src_val = tl.max(abs_src_val)
+        xmax = tl.max(accumulator)
+        xmin = tl.min(accumulator)
+        sigmoid_max = 1.0 / (1.0 + tl.exp(-clip_factor_a_max))
+        sigmoid_min = 1.0 / (1.0 + tl.exp(-clip_factor_a_min))
+
+        xmax = xmax * sigmoid_max
+        xmin = xmin * sigmoid_min
+
+        abs_xmin = tl.abs(xmin)
+        max_src_val = tl.maximum(abs_xmin, xmax)
 
         scale = max_src_val / 7.
+
+        scale = tl.where(max_src_val == 0.0, 1.0, scale)
+        
         quant_val = libdevice.llrint(accumulator / scale)
-        quant_val = max(-8, min(quant_val, 7))
+        quant_val = tl.maximum(-8, tl.minimum(quant_val, 7))
 
         quant_val = quant_val.reshape(BLOCK_SIZE_M, np2_N // 2, 2, can_reorder=False)
         quant_val_even, quant_val_odd = quant_val.split()
@@ -129,6 +142,8 @@ def quant_kernel(
         N: tl.constexpr,
         np2_M: tl.constexpr, 
         np2_N: tl.constexpr,
+        clip_factor_a_max,
+        clip_factor_a_min,
 ):
     '''
     quant fp16 tensor to int4
@@ -141,12 +156,23 @@ def quant_kernel(
     src_mask = (index_rows[:, None] < M) & (index_cols[None, :] < N)
     src = tl.load(src_ptrs, mask=src_mask, other=0.0)
 
-    abs_src_val = tl.abs(src)
-    max_src_val = tl.max(abs_src_val)
+    xmax = tl.max(src)
+    xmin = tl.min(src)
+    sigmoid_max = 1.0 / (1.0 + tl.exp(-clip_factor_a_max))
+    sigmoid_min = 1.0 / (1.0 + tl.exp(-clip_factor_a_min))
+
+    xmax = xmax * sigmoid_max
+    xmin = xmin * sigmoid_min
+
+    abs_xmin = tl.abs(xmin)
+    max_src_val = tl.maximum(abs_xmin, xmax)
+
     scale = max_src_val / 7.
 
+    scale = tl.where(scale == 0.0, 1.0, scale)
+
     quant_val = libdevice.llrint(src / scale)
-    quant_val = max(-8, min(quant_val, 7))
+    quant_val = tl.maximum(-8, tl.minimum(quant_val, 7))
     quant_val = quant_val.reshape(np2_M,  np2_N // 2, 2, can_reorder=False)
     quant_val_even, quant_val_odd = quant_val.split()
     quant_val_odd = quant_val_odd << 4
@@ -163,7 +189,7 @@ def quant_kernel(
     tl.store(output_scale + batch_id, scale)
 
 
-def kron_matmul(a, b, c, seq_len):
+def kron_matmul(a, b, c, seq_len, clip_factor_a_max, clip_factor_a_min):
     # Check constraints.
     # a @ b @ c, a [m, m], b [b, m, n], c [n, n]
     assert a.shape[1] == b.shape[1], "Incompatible dimensions"
@@ -180,6 +206,7 @@ def kron_matmul(a, b, c, seq_len):
     # is_split = True
     output_scale = torch.empty((B, 1), device=a.device, dtype=torch.float16)
     quant_res = torch.empty((B, M, N // 2), device=a.device, dtype=torch.uint8)
+    
     if is_split:
         bmm_res = torch.empty((B, M, N), device=a.device, dtype=a.dtype)
         # 2 x bmm
@@ -198,6 +225,8 @@ def kron_matmul(a, b, c, seq_len):
             bmm_res.stride(0), bmm_res.stride(1), bmm_res.stride(2),  #
             BLOCK_SIZE_M,
             is_split,
+            clip_factor_a_max = 1.0,
+            clip_factor_a_min = 1.0,
         )
         # quant fp16 to int4
         grid = (seq_len, Actual_B)
@@ -210,6 +239,8 @@ def kron_matmul(a, b, c, seq_len):
             B, M, N,
             triton.next_power_of_2(M),
             triton.next_power_of_2(N),
+            clip_factor_a_max,
+            clip_factor_a_min,
         )
         packed_tensor = deploy.PackedQuantizedTensor(quant_res.reshape(B, -1), output_scale)
     else:
@@ -228,6 +259,8 @@ def kron_matmul(a, b, c, seq_len):
             quant_res.stride(0), quant_res.stride(1), quant_res.stride(2),  #
             BLOCK_SIZE_M,
             is_split,
+            clip_factor_a_max,
+            clip_factor_a_min,
         )
         packed_tensor = deploy.PackedQuantizedTensor(quant_res.reshape(B, -1), output_scale)
     return packed_tensor

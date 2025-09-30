@@ -243,7 +243,6 @@ def benchmark(B, M, N, S, provider):
     if provider == 'triton':
         ms, min_ms, max_ms = triton.testing.do_bench(lambda: matmul(a, b, c, S), quantiles=quantiles)
     perf = lambda ms: 2 * B * (M * M * N + M * N * N) * 1e-12 / (ms * 1e-3)
-    # import pdb; pdb.set_trace()
     return perf(ms), perf(max_ms), perf(min_ms), ms, max_ms, min_ms
 
 
@@ -252,7 +251,6 @@ if __name__ == '__main__':
     # triton_time_avg, triton_time_max, triton_time_min = benchmark(1 * 1, 64, 64, 4096, 'triton')
     # cublas_perf_avg, cublas_perf_max, cublas_perf_min, \
     # cublas_time_avg, cublas_time_max, cublas_time_min = benchmark(1 * 1, 64, 64, 4096, 'cublas')
-    # import pdb; pdb.set_trace()
     # M_list = [64, 64, 64, 86, 108, 112, 128]
     # N_list = [64, 80, 128, 128, 128, 128, 224]
     M_list = [64, 64, 64, 86, 108, 112]

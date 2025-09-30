@@ -8,15 +8,21 @@ import pprint
 
 supported_models = [
             './modelzoo/llama-2/llama-2-7b',
-            './modelzoo/llama-2/llama-2-13b',
+            #'./modelzoo/llama-2/llama-2-13b',
             './modelzoo/llama-2/llama-2-70b',
+            './modelzoo/llama-2-hf/llama-2-7b-hf',
+            #'./modelzoo/llama-2-hf/llama-2-13b-hf',
+            './modelzoo/llama-2-hf/llama-2-70b-hf',
             './modelzoo/llama-3/llama-3-8b',
             './modelzoo/llama-3/llama-3-70b',
             './modelzoo/llama-3.1/llama-3.1-8b',
             './modelzoo/llama-3.1/llama-3.1-70b',
-            './modelzoo/llama-3.1-instruct/llama-3.1-instruct-8b',
-            './modelzoo/qwen-2.5-instruct/qwen-2.5-instruct-7b',
-            './modelzoo/qwen-2.5-instruct/qwen-2.5-instruct-32b',
+            './modelzoo/llama-3.1-instruct/llama-3.1-8b-instruct',
+            './modelzoo/llama-3.3-instruct/llama-3.3-70b-instruct',
+            './modelzoo/llama-3-instruct/llama-3-8b-instruct',
+            './modelzoo/llama-3-instruct/llama-3-8b-instruct',
+            './modelzoo/qwen-2.5-instruct/qwen-2.5-7b-instruct',
+            './modelzoo/qwen-2.5-instruct/qwen-2.5-32b-instruct',
             ]
 # supported_models = [
 #             'meta-llama/Llama-2-7b-hf',
@@ -143,6 +149,10 @@ def parser_gen():
         "--distribute_model",
         action="store_true",
         help="Distribute the model across multiple GPUs for evaluation.")
+
+    # Add quantized_save flag
+    parser.add_argument('--quantized_save', action = "store_true", default = False,
+                        help = 'Save the quantized model checkpoint.')
 
     args = parser.parse_args()
     if args.a_groupsize > -1:
