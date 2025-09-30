@@ -16,11 +16,11 @@ import flatquant.data_utils as data_utils
 from tqdm import tqdm
 
 model_configs = [
-    "./modelzoo/llama-2-hf/llama-2-7b-hf",
-    "./modelzoo/llama-3/llama-3-8b", 
-    "./modelzoo/llama-3-instruct/llama-3-8b-instruct",
-    "./modelzoo/llama-3.1-instruct/llama-3.1-8b-instruct",
-    "./modelzoo/llama-3.1/llama-3.1-8b"
+    './modelzoo/meta-llama/Llama-2-7b-hf',
+    './modelzoo/meta-llama/Meta-Llama-3-8B',
+    './modelzoo/meta-llama/Meta-Llama-3-8B-Instruct',
+    './modelzoo/meta-llama/Llama-3.1-8B', 
+    './modelzoo/meta-llama/Llama-3.1-8B-Instruct', 
 ]
 
 benchmark_dtypes = ["int4", torch.float16]
@@ -62,16 +62,6 @@ def module_benchmark(module, repeat_idx):
 
     return (end_time - start_time) * 1000 / num_bench_steps, peak_memory
 
-def load_dataset(config_name):
-    for eval_dataset in ["wikitext2"]:
-        testloader = data_utils.get_loaders(
-                    args = None,
-                    name = eval_dataset,
-                    model = config_name,
-                    seqlen = 2048,
-                    eval_mode = True
-                )
-    return testloader
 
 @torch.no_grad()
 def ppl_eval(model, testenc):
@@ -369,7 +359,14 @@ def benchmark(args):
         pprint.pprint(vars(args))
 
         print("Loading dataset...")
-        test_data = load_dataset(config_name = config_name)
+        tokenizer = transformers.AutoTokenizer.from_pretrained(config_name, use_fast=False)
+        test_data = data_utils.get_loaders(
+                    args = None,
+                    name = "wikitext2",
+                    tokenizer = tokenizer,
+                    seqlen = 2048,
+                    eval_mode = True
+                )
         print(f"Loaded dataset")
 
         # FP16

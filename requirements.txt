@@ -1,9 +1,14 @@
 transformers==4.45.0
-torch==2.7.1
+torch>=2.6.0
 accelerate==0.32.0
 datasets==2.17.1
 lm-eval==0.4.9.1
 termcolor
+triton==3.0.0
+
+## for plot flatness
+matplotlib
+brokenaxes
 
 ## for Llama2-tokenizer
 sentencepiece

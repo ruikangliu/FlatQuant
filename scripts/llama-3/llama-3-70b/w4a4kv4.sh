@@ -1,7 +1,7 @@
 #!/bin/bash
 
 python ./main.py \
-    --model ./modelzoo/llama-3/llama-3-70b \
+    --model ./modelzoo/meta-llama/Meta-Llama-3-70B \
     --w_bits 4 --a_bits 4 \
     --k_bits 4 --k_asym --k_groupsize 128 --v_bits 4 --v_asym --v_groupsize 128 \
     --cali_bsz 4 --epoch 15 --flat_lr 5e-3 \

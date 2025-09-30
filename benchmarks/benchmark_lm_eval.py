@@ -16,11 +16,11 @@ import torch.nn as nn
 from contextlib import contextmanager
 
 model_configs = [
-    "./modelzoo/llama-2-hf/llama-2-7b-hf",
-    "./modelzoo/llama-3/llama-3-8b", 
-    "./modelzoo/llama-3-instruct/llama-3-8b-instruct",
-    "./modelzoo/llama-3.1-instruct/llama-3.1-8b-instruct",
-    "./modelzoo/llama-3.1/llama-3.1-8b"
+    './modelzoo/meta-llama/Llama-2-7b-hf',
+    './modelzoo/meta-llama/Meta-Llama-3-8B',
+    './modelzoo/meta-llama/Meta-Llama-3-8B-Instruct',
+    './modelzoo/meta-llama/Llama-3.1-8B', 
+    './modelzoo/meta-llama/Llama-3.1-8B-Instruct', 
 ]
 
 benchmark_dtypes = ["int4", torch.float16]
