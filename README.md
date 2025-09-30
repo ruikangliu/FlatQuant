@@ -35,10 +35,11 @@ FlatQuant leverages Fast and Learnable Affine Transformations tailored for each 
 ```bash
 conda create -n flatquant python=3.10 -y
 conda activate flatquant
-pip install -r requirements.txt && pip install -e . && pip install triton==3.0.0
+pip install -r requirements.txt && pip install -e . 
+pip install flash-attn --no-build-isolation
 ```
 
-**Note:** To run models like LLaMA-3.1 or Qwen-2.5, we use `transformers==4.45.0` instead.
+**Note:** - To run models like LLaMA2 and LLaMA3, please install dependencies from `requirements_llama2.txt`.
 
 ### Data Preparation
 
