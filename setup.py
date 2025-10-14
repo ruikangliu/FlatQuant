@@ -26,7 +26,7 @@ def get_cuda_arch_flags():
         '-gencode', 'arch=compute_86,code=sm_86',  # Ampere
     ]
     
-def third_party_cmake():
+def third_party_cmake(extra_pip_flags=None):
     import subprocess, sys, shutil
     
     cmake = shutil.which('cmake')
@@ -45,22 +45,51 @@ def third_party_cmake():
     # install fast hadamard transform
     hadamard_dir = os.path.join(HERE, 'third-party/fast-hadamard-transform')
     pip = shutil.which('pip')
-    retcode = subprocess.call([pip, 'install', '-e', hadamard_dir])
+    
+    # Build pip command with base flags
+    pip_cmd = [pip, 'install', '-e', hadamard_dir]
+    
+    # Add extra flags if provided
+    if extra_pip_flags:
+        pip_cmd.extend(extra_pip_flags)
+    
+    retcode = subprocess.call(pip_cmd)
+
+def get_build_args():
+    """Get pip build arguments from BUILD_ARGS environment variable"""
+    build_args = os.environ.get('BUILD_ARGS', '')
+    if build_args:
+        return build_args.split()
+    return []
+
+def get_kernels():
+    extra_kernels = os.environ.get('BUILD_KERNELS', '')
+    default_kernels = [
+        'deploy/kernels/bindings.cpp',
+        'deploy/kernels/gemm.cu',
+        'deploy/kernels/quant.cu',
+        'deploy/kernels/flashinfer.cu',
+    ]
+    if extra_kernels:
+        return extra_kernels.split() + default_kernels
+    else:
+        return default_kernels
 
 if __name__ == '__main__':
-    third_party_cmake()
+    # Get build args from environment variable
+    extra_pip_flags = get_build_args()
+    
+    # Call third_party_cmake with extra flags
+    third_party_cmake(extra_pip_flags if extra_pip_flags else None)
+    
     remove_unwanted_pytorch_nvcc_flags()
     setup(
-        name='deploy',
+        name='flatquant',
+        packages=['flatquant', 'deploy'],
         ext_modules=[
             CUDAExtension(
                 name='deploy._CUDA',
-                sources=[
-                    'deploy/kernels/bindings.cpp',
-                    'deploy/kernels/gemm.cu',
-                    'deploy/kernels/quant.cu',
-                    'deploy/kernels/flashinfer.cu',
-                ],
+                sources=get_kernels(),
                 include_dirs=[
                     os.path.join(setup_dir, 'deploy/kernels/include'),
                     os.path.join(setup_dir, 'third-party/cutlass/include'),
