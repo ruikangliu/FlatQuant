@@ -264,8 +264,11 @@ class FlatQuantLlamaAttention(LlamaAttention):
         if self._ori_mode:
             attn_output = self.o_proj._ori_forward(attn_output)
         else:
-            # new foward: 
-            if self.o_trans is None and self.vcache_trans is not None:
+            # new foward:
+            if self.o_trans is None and self.vcache_trans is None:
+                # RTN baseline (无 o/v 变换): 直接量化投影, 不做在线旋转
+                attn_output = self.o_proj(attn_output)
+            elif self.o_trans is None and self.vcache_trans is not None:
                 # attn_output = self.vcache_trans(value_states)
                 init_shape = attn_output.shape
                 attn_output = attn_output.reshape(-1, self.config.num_attention_heads, self.config.hidden_size//self.config.num_attention_heads)

@@ -19,8 +19,11 @@ supported_models = [
             './modelzoo/meta-llama/Llama-3.1-8B-Instruct', 
             './modelzoo/meta-llama/Llama-3.1-70B-Instruct', 
             './modelzoo/meta-llama/Llama-3.3-70B-Instruct', 
-            './modelzoo/Qwen/Qwen2.5-7B-Instruct', 
-            './modelzoo/Qwen/Qwen2.5-32B-Instruct', 
+            './modelzoo/Qwen/Qwen2.5-7B-Instruct',
+            './modelzoo/Qwen/Qwen2.5-32B-Instruct',
+            './modelzoo/qwen-2.5-7b-instruct',
+            './modelzoo/llama-2-7b',
+            './modelzoo/llama-3-8b',
             ]
 supported_datasets = ['wikitext2', 'c4', 'pile']
 
